@@ -1,0 +1,20 @@
+image: docker:latest
+
+variables:
+  DOCKER_HOST: tcp://localhost:2375
+
+services:
+  - docker:dind
+
+before_script:
+  - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" $CI_REGISTRY
+
+build-master:
+  tags:
+    - dind
+  stage: build
+  script:
+    - docker build  --network host  -t $PUBLIC_IMAGE .
+    - docker push $PUBLIC_IMAGE
+  only:
+    - master
