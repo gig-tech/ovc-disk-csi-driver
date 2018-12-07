@@ -41,10 +41,12 @@ func (d *Driver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRe
 		return nil, status.Error(codes.InvalidArgument, "Volume capability not supported")
 	}
 
-	source, ok := req.PublishContext["devicePath"]
-	if !ok {
-		return nil, status.Error(codes.InvalidArgument, "Device path not provided")
+	diskInfo, err := d.client.Disks.Get(volumeID)
+	if err != nil {
+		return nil, err
 	}
+
+	source := getDevicePath(diskInfo.Order)
 
 	// TODO: consider replacing IsLikelyNotMountPoint by IsNotMountPoint
 	notMnt, err := d.mounter.Interface.IsLikelyNotMountPoint(target)
