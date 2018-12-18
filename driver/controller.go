@@ -141,7 +141,7 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 
 	err = d.client.Disks.Delete(deleteConfig)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	ll.Info("volume is deleted")

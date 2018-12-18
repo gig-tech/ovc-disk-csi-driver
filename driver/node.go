@@ -199,6 +199,8 @@ func (d *Driver) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (
 	str := strings.Split(nodeID, "-")
 	machineID := str[1]
 
+	d.log.Infof("NodeID = %v", machineID)
+
 	return &csi.NodeGetInfoResponse{
 		NodeId: machineID,
 	}, nil
