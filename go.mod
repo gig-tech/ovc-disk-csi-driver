@@ -3,10 +3,15 @@ module github.com/ovc-csi-driver
 require (
 	github.com/container-storage-interface/spec v1.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/jaypipes/ghw v0.0.0-20190127130829-67fda59154f6
+	github.com/jaypipes/pcidb v0.0.0-20181227195446-5e996fc4841b // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/nuberabe/ovc-sdk-go v0.0.0-20181204162528-3f1abdadbaad
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/afero v1.1.2 // indirect
 	google.golang.org/grpc v1.16.0
+	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	k8s.io/apimachinery v0.0.0-20181204150028-eb8c8024849b // indirect
 	k8s.io/klog v0.1.0 // indirect
 	k8s.io/kubernetes v1.13.0

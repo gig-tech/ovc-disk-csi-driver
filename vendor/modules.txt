@@ -10,10 +10,18 @@ github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
+# github.com/jaypipes/ghw v0.0.0-20190127130829-67fda59154f6
+github.com/jaypipes/ghw
+# github.com/jaypipes/pcidb v0.0.0-20181227195446-5e996fc4841b
+github.com/jaypipes/pcidb
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/mitchellh/go-homedir v1.1.0
+github.com/mitchellh/go-homedir
 # github.com/nuberabe/ovc-sdk-go v0.0.0-20181204162528-3f1abdadbaad
 github.com/nuberabe/ovc-sdk-go/ovc
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
 # github.com/sirupsen/logrus v1.2.0
 github.com/sirupsen/logrus
 # golang.org/x/crypto v0.0.0-20180904163835-0709b304e793
@@ -63,6 +71,8 @@ google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/stats
 google.golang.org/grpc/tap
 google.golang.org/grpc/balancer/base
+# howett.net/plist v0.0.0-20181124034731-591f970eefbb
+howett.net/plist
 # k8s.io/apimachinery v0.0.0-20181204150028-eb8c8024849b
 k8s.io/apimachinery/pkg/util/sets
 # k8s.io/klog v0.1.0

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/jaypipes/ghw"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -45,7 +46,10 @@ func (d *Driver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRe
 		return nil, err
 	}
 
-	source := getDevicePath(diskInfo.Order)
+	source, err := getDevicePath(diskInfo.Order)
+	if err != nil {
+		return nil, err
+	}
 
 	d.log.Infof("sourcepath for mounting: %v", source)
 
@@ -218,7 +222,11 @@ func (d *Driver) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGetVolumeS
 // 	return nil, status.Error(codes.Unimplemented, "")
 // }
 
-func getDevicePath(i int) string {
-	letter := string('a' + i)
-	return "/dev/vd" + letter
+func getDevicePath(i int) (string, error) {
+	block, err := ghw.Block()
+	if err != nil {
+		return "", err
+	}
+	disk := block.Disks[i]
+	return fmt.Sprintf("/dev/%s", disk.Name), nil
 }
