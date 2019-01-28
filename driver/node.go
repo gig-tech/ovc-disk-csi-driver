@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"google.golang.org/grpc/codes"
@@ -47,6 +46,8 @@ func (d *Driver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRe
 	}
 
 	source := getDevicePath(diskInfo.Order)
+
+	d.log.Infof("sourcepath for mounting: %v", source)
 
 	// TODO: consider replacing IsLikelyNotMountPoint by IsNotMountPoint
 	notMnt, err := d.mounter.Interface.IsLikelyNotMountPoint(target)
@@ -195,14 +196,9 @@ func (d *Driver) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabi
 // NodeGetInfo returns the supported capabilities of the node server
 func (d *Driver) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	d.log.Infof("NodeGetInfo: called with args %#v", req)
-	nodeID := d.nodeid
-	str := strings.Split(nodeID, "-")
-	machineID := str[1]
-
-	d.log.Infof("NodeID = %v", machineID)
 
 	return &csi.NodeGetInfoResponse{
-		NodeId: machineID,
+		NodeId: d.nodeid,
 	}, nil
 }
 
