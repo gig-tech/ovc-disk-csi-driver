@@ -1,6 +1,8 @@
 # `ghw` - Golang HardWare discovery/inspection library [![Build Status](https://travis-ci.org/jaypipes/ghw.svg?branch=master)](https://travis-ci.org/jaypipes/ghw)
 
-`ghw` is a small Golang library providing hardware inspection and discovery.
+`ghw` is a small Golang library providing hardware inspection and discovery
+for Linux. There currently exists partial support for MacOSX and Windows
+support is planned for a future release.
 
 ## Design Principles
 
@@ -33,7 +35,7 @@ information about the host computer:
 * [Network](#network)
 * [PCI](#pci)
 * [GPU](#gpu)
-
+* [YAML and JSON serialization](#serialization)
 
 ### Overriding the root mountpoint `ghw` uses
 
@@ -55,6 +57,28 @@ Alternately, you can use the `ghw.WithChroot()` function like so:
 
 ```go
 cpu, err := ghw.CPU(ghw.WithChroot("/host"))
+```
+
+### Disabling warning messages
+
+When `ghw` isn't able to retrieve some information, it may print certain
+warning messages to `stderr`. To disable these warnings, simply set the
+`GHW_DISABLE_WARNINGS` environs variable:
+
+```
+$ ghwc memory
+WARNING:
+Could not determine total physical bytes of memory. This may
+be due to the host being a virtual machine or container with no
+/var/log/syslog file, or the current user may not have necessary
+privileges to read the syslog. We are falling back to setting the
+total physical amount of memory to the total usable amount of memory
+memory (24GB physical, 24GB usable)
+```
+
+```
+$ GHW_DISABLE_WARNINGS=1 ghwc memory
+memory (24GB physical, 24GB usable)
 ```
 
 ### Memory
@@ -228,7 +252,15 @@ Each `ghw.Disk` struct contains the following fields:
 * `ghw.Disk.SizeBytes` contains the amount of storage the disk provides
 * `ghw.Disk.PhysicalBlockSizeBytes` contains the size of the physical blocks
   used on the disk, in bytes
-* `ghw.Disk.BusType` will be "SCSI", "IDE", "Virtio", or "NVMe"
+* `ghw.Disk.DriveType` is the type of drive. It is of type `ghw.DriveType`
+  which has a `ghw.DriveType.String()` method that can be called to return a
+  string representation of the bus. This string will be "HDD", "FDD", "ODD",
+  or "SSD", which correspond to a hard disk drive (rotational), floppy drive,
+  optical (CD/DVD) drive and solid-state drive.
+* `ghw.Disk.StorageController` is the type of storage controller/drive. It is
+  of type `ghw.StorageController` which has a `ghw.StorageController.String()`
+  method that can be called to return a string representation of the bus. This
+  string will be "SCSI", "IDE", "virtio", or "NVMe"
 * `ghw.Disk.NUMANodeID` is the numeric index of the NUMA node this disk is
   local to, or -1
 * `ghw.Disk.Vendor` contains a string with the name of the hardware vendor for
@@ -285,7 +317,7 @@ Example output from my personal workstation:
 
 ```
 block storage (1 disk, 2TB physical storage)
- /dev/sda (2TB) [SCSI]  LSI - SN #3600508e000000000f8253aac9a1abd0c
+ /dev/sda HDD (2TB) SCSI [@pci-0000:04:00.0-scsi-0:1:0:0 (node #0)] vendor=LSI model=Logical_Volume serial=600508e000000000f8253aac9a1abd0c WWN=0x600508e000000000f8253aac9a1abd0c
   /dev/sda1 (100MB)
   /dev/sda2 (187GB)
   /dev/sda3 (449MB)
@@ -411,8 +443,8 @@ The `ghw.NICCapability` struct contains the following fields:
   "tcp-segmentation-offload")
 * `ghw.NICCapability.IsEnabled` is a boolean indicating whether the capability
   is currently enabled/active on the NIC
-* `ghw.NICCapability.CanChange` is a boolean indicating whether the capability
-  may be turned on or off
+* `ghw.NICCapability.CanEnable` is a boolean indicating whether the capability
+  may be enabled
 
 ```go
 package main
@@ -786,6 +818,48 @@ information
 **NOTE**: You can [read more](#topology) about the fields of the
 `ghw.TopologyNode` struct if you'd like to dig deeper into the NUMA/topology
 subsystem
+
+## Serialization
+
+All of the `ghw` `XXXInfo` structs -- e.g. `ghw.CPUInfo` -- have two methods
+for producing a serialized JSON or YAML string representation of the contained
+information:
+
+* `JSONString()` returns a string containing the information serialized into
+  JSON. It accepts a single boolean parameter indicating whether to use
+  indentation when outputting the string
+* `YAMLString()` returns a string containing the information serialized into
+  YAML
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/jaypipes/ghw"
+)
+
+func main() {
+	mem, err := ghw.Memory()
+	if err != nil {
+		fmt.Printf("Error getting memory info: %v", err)
+	}
+
+	fmt.Printf("%s", mem.YAMLString())
+}
+```
+
+the above example code prints the following out on my local workstation:
+
+```
+memory:
+  supported_page_sizes:
+  - 1073741824
+  - 2097152
+  total_physical_bytes: 25263415296
+  total_usable_bytes: 25263415296
+```
 
 ## Developers
 

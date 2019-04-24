@@ -2,6 +2,10 @@
 github.com/container-storage-interface/spec/lib/go/csi
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
+# github.com/ghodss/yaml v1.0.0
+github.com/ghodss/yaml
+# github.com/gig-tech/ovc-sdk-go v0.2.0
+github.com/gig-tech/ovc-sdk-go/ovc
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
@@ -10,23 +14,19 @@ github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-# github.com/jaypipes/ghw v0.0.0-20190127130829-67fda59154f6
+# github.com/jaypipes/ghw v0.0.0-20190423090301-93d787280a75
 github.com/jaypipes/ghw
-# github.com/jaypipes/pcidb v0.0.0-20181227195446-5e996fc4841b
+# github.com/jaypipes/pcidb v0.0.0-20190216134740-adf5a9192458
 github.com/jaypipes/pcidb
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/nuberabe/ovc-sdk-go v0.0.0-20181204162528-3f1abdadbaad
-github.com/nuberabe/ovc-sdk-go/ovc
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
-# github.com/sirupsen/logrus v1.2.0
+# github.com/sirupsen/logrus v1.4.1
 github.com/sirupsen/logrus
-# golang.org/x/crypto v0.0.0-20180904163835-0709b304e793
-golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20180826012351-8a410e7b638d
+# golang.org/x/net v0.0.0-20190311183353-d8887717615a
 golang.org/x/net/context
 golang.org/x/net/trace
 golang.org/x/net/internal/timeseries
@@ -34,17 +34,16 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/http/httpguts
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33
+# golang.org/x/sys v0.0.0-20190312061237-fead79001313
 golang.org/x/sys/unix
-golang.org/x/sys/windows
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.1-0.20181227161524-e6919f6577db
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
 # google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.16.0
+# google.golang.org/grpc v1.20.1
 google.golang.org/grpc
 google.golang.org/grpc/codes
 google.golang.org/grpc/status
@@ -57,9 +56,12 @@ google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancerload
+google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/channelz
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpcrand
+google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
@@ -71,16 +73,22 @@ google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/stats
 google.golang.org/grpc/tap
 google.golang.org/grpc/balancer/base
+google.golang.org/grpc/credentials/internal
+google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/internal/syscall
+# gopkg.in/yaml.v2 v2.2.1
+gopkg.in/yaml.v2
 # howett.net/plist v0.0.0-20181124034731-591f970eefbb
 howett.net/plist
-# k8s.io/apimachinery v0.0.0-20181204150028-eb8c8024849b
+# k8s.io/apimachinery v0.0.0-20190424052434-11f1676e3da4
 k8s.io/apimachinery/pkg/util/sets
-# k8s.io/klog v0.1.0
+# k8s.io/klog v0.3.0
 k8s.io/klog
-# k8s.io/kubernetes v1.13.0
+# k8s.io/kubernetes v1.14.1
 k8s.io/kubernetes/pkg/util/mount
-k8s.io/kubernetes/pkg/util/file
-k8s.io/kubernetes/pkg/util/io
-k8s.io/kubernetes/pkg/util/nsenter
-# k8s.io/utils v0.0.0-20181115163542-0d26856f57b3
+# k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7
 k8s.io/utils/exec
+k8s.io/utils/io
+k8s.io/utils/keymutex
+k8s.io/utils/nsenter
+k8s.io/utils/path

@@ -333,18 +333,41 @@ func (ctx *context) disks() []*Disk {
 	for _, file := range files {
 		dname := file.Name()
 
-		var busType string
-		if strings.HasPrefix(dname, "sd") {
-			busType = "SCSI"
+		// The conditionals below which set the controller and drive type are
+		// based on information listed here:
+		// https://en.wikipedia.org/wiki/Device_file
+		busType := BUS_TYPE_UNKNOWN
+		driveType := DRIVE_TYPE_UNKNOWN
+		storageController := STORAGE_CONTROLLER_UNKNOWN
+		if strings.HasPrefix(dname, "fd") {
+			driveType = DRIVE_TYPE_FDD
+		} else if strings.HasPrefix(dname, "sd") {
+			driveType = DRIVE_TYPE_HDD
+			busType = BUS_TYPE_SCSI
+			storageController = STORAGE_CONTROLLER_SCSI
 		} else if strings.HasPrefix(dname, "hd") {
-			busType = "IDE"
+			driveType = DRIVE_TYPE_HDD
+			busType = BUS_TYPE_IDE
+			storageController = STORAGE_CONTROLLER_IDE
 		} else if strings.HasPrefix(dname, "vd") {
-			busType = "Virtio"
+			driveType = DRIVE_TYPE_HDD
+			busType = BUS_TYPE_VIRTIO
+			storageController = STORAGE_CONTROLLER_VIRTIO
 		} else if regexNVMeDev.MatchString(dname) {
-			busType = "NVMe"
+			driveType = DRIVE_TYPE_HDD
+			busType = BUS_TYPE_NVME
+			storageController = STORAGE_CONTROLLER_NVME
+		} else if strings.HasPrefix(dname, "sr") {
+			driveType = DRIVE_TYPE_ODD
+			busType = BUS_TYPE_SCSI
+			storageController = STORAGE_CONTROLLER_SCSI
 		}
-		if busType == "" {
+
+		if driveType == DRIVE_TYPE_UNKNOWN {
 			continue
+		}
+		if !ctx.diskIsRotational(dname) {
+			driveType = DRIVE_TYPE_SSD
 		}
 
 		size := ctx.diskSizeBytes(dname)
@@ -360,6 +383,8 @@ func (ctx *context) disks() []*Disk {
 			Name:                   dname,
 			SizeBytes:              size,
 			PhysicalBlockSizeBytes: pbs,
+			DriveType:              driveType,
+			StorageController:      storageController,
 			BusType:                busType,
 			BusPath:                busPath,
 			NUMANodeID:             node,
@@ -380,6 +405,12 @@ func (ctx *context) disks() []*Disk {
 	}
 
 	return disks
+}
+
+func (ctx *context) diskIsRotational(devName string) bool {
+	path := filepath.Join(ctx.pathSysBlock(), devName, "queue", "rotational")
+	contents := safeIntFromFile(path)
+	return contents == 1
 }
 
 // PartitionSizeBytes has been deprecated in 0.2. Please use the
