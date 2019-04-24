@@ -1,4 +1,5 @@
 # Copyright 2018 The Kubernetes Authors.
+# Copyright 2018-2019 GIG TECHNOLOGY NV
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IMAGE=registry.nubera.be:4567/docker/ovc-disk-csi-driver
+IMAGE=gigtech/ovc-disk-csi-driver
 VERSION=latest
 
 .PHONY: ovc-csi-driver
 ovc-csi-driver:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X git.nubera.be/Customers/gig/csi.vendorVersion=${VERSION}" -o bin/ovc-csi-driver ./cmd/
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X gitlab.com/gig-tech/csi.vendorVersion=${VERSION}" -o bin/ovc-csi-driver ./cmd/
 
 .PHONY: test
 test:
