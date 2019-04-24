@@ -19,7 +19,7 @@ VERSION=latest
 .PHONY: ovc-csi-driver
 ovc-csi-driver:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X gitlab.com/gig-tech/csi.vendorVersion=${VERSION}" -o bin/ovc-csi-driver ./cmd/
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X github.com/gig-tech/csi.vendorVersion=${VERSION}" -o bin/ovc-csi-driver ./cmd/
 
 .PHONY: test
 test:

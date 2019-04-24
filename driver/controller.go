@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/nuberabe/ovc-sdk-go/ovc"
+	"github.com/gig-tech/ovc-sdk-go/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,8 +38,8 @@ const (
 )
 
 const (
-	//createdByNub is used to tag a description to a disk created by the CSI Driver
-	createdByNub = "Created by Nubera CSI Driver"
+	//createdByGig is used to tag a description to a disk created by the CSI Driver
+	createdByGig = "Created by GIG-tech CSI Driver"
 
 	// minimumVolumeSizeInBytes is used to validate that the user is not trying
 	// to create a volume that is smaller than what we support
@@ -93,7 +93,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	diskConfig := &ovc.DiskConfig{
 		Name:        volumeName,
-		Description: createdByNub,
+		Description: createdByGig,
 		Size:        int(size / GB),
 		AccountID:   d.accountID,
 		GID:         d.gid,

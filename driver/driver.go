@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/nuberabe/ovc-sdk-go/ovc"
+	"github.com/gig-tech/ovc-sdk-go/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/util/mount"
@@ -34,7 +34,7 @@ import (
 // Driver struct contains all relevant Driver information
 type Driver struct {
 	endpoint  string
-	client    *ovc.OvcClient
+	client    *ovc.Client
 	accountID int
 	gid       int
 	nodeid    string
@@ -60,7 +60,10 @@ func NewDriver(url, ep, nodeid string, accountID, gid int, mounter *mount.SafeFo
 		ClientID:     os.Getenv("OVC_CLIENT_ID"),
 		ClientSecret: os.Getenv("OVC_CLIENT_SECRET"),
 	}
-	client := ovc.NewClient(c, url)
+	client, err := ovc.NewClient(c, url)
+	if err != nil {
+		return nil, err
+	}
 
 	if mounter == nil {
 		mounter = newSafeMounter()
