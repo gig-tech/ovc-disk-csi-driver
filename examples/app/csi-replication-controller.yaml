@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ovc-disk-csi-driver-replication-controller
+  namespace: ovc-disk-csi-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ovc-disk-csi-driver-replication-controller
+  template:
+    metadata:
+      name: ovc-disk-csi-driver-replication-controller
+      labels:
+        app: ovc-disk-csi-driver-replication-controller
+    spec:
+      containers:
+      - name: ovc-disk-csi-driver-replication-controller
+        image: centos
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: claim1

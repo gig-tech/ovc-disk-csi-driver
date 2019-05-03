@@ -1,0 +1,48 @@
+# kind: Service
+# apiVersion: v1
+# metadata:
+#   name: ovc-disk-csi-driver-snapshotter
+#   labels:
+#     app: ovc-disk-csi-driver-snapshotter
+# spec:
+#   selector:
+#     app: ovc-disk-csi-driver-snapshotter
+#   ports:
+#     - name: dummy
+#       port: 12345
+
+# ---
+# kind: StatefulSet
+# apiVersion: apps/v1
+# metadata:
+#   name: ovc-disk-csi-driver-snapshotter
+# spec:
+#   serviceName: "ovc-disk-csi-driver-snapshotter"
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: ovc-disk-csi-driver-snapshotter
+#   template:
+#     metadata:
+#       labels:
+#         app: ovc-disk-csi-driver-snapshotter
+#     spec:
+#       serviceAccount: csi-snapshotter
+#       containers:
+#         - name: csi-snapshotter
+#           image: quay.io/k8scsi/csi-snapshotter:v0.4.1
+#           args:
+#             - "--csi-address=$(ADDRESS)"
+#             - "--connection-timeout=15s"
+#           env:
+#             - name: ADDRESS
+#               value: /csi/csi.sock
+#           imagePullPolicy: Always
+#           volumeMounts:
+#             - mountPath: /csi
+#               name: socket-dir
+#       volumes:
+#         - hostPath:
+#             path: /var/lib/kubelet/plugins/ovc-disk-csi-driver
+#             type: DirectoryOrCreate
+#           name: socket-dir
