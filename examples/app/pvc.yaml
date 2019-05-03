@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim1
+  namespace: ovc-disk-csi-demo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ovc-disk-csi-driver-sc
+  resources:
+    requests:
+      storage: 8Gi

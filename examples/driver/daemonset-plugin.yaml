@@ -1,0 +1,110 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  namespace: ovc-disk-csi
+  name: ovc-disk-csi-driver-driver
+spec:
+  selector:
+    matchLabels:
+      app: ovc-disk-csi-driver-driver
+  template:
+    metadata:
+      labels:
+        app: ovc-disk-csi-driver-driver
+    spec:
+      serviceAccountName: csi-driver-registrar
+      hostNetwork: true
+      containers:
+        - name: driver-registrar
+          image: quay.io/k8scsi/driver-registrar:v1.0-canary
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --mode=node-register
+            - --driver-requires-attachment=true
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/disk.ovc.csi.gig.tech/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+        - name: ovc-plugin
+          image: gigtech/ovc-disk-csi-driver
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nodeid=$(KUBE_NODE_NAME)"
+            - "--url=$(OVC_URL)"
+            - "--gid=$(OVC_GID)"
+            - "--account_id=$(OVC_ACCOUNT_ID)"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:/csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: OVC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: client_id
+            - name: OVC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: client_secret
+            - name: OVC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: url
+            - name: OVC_GID
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: gid
+            - name: OVC_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: account_id
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: kubelet-dir
+              mountPath: /var/lib/kubelet
+              mountPropagation: "Bidirectional"
+            - name: plugin-dir
+              mountPath: /csi
+            - name: device-dir
+              mountPath: /dev
+      volumes:
+        - name: kubelet-dir
+          hostPath:
+            path: /var/lib/kubelet
+            type: Directory
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/disk.ovc.csi.gig.tech/
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: DirectoryOrCreate
+        - name: device-dir
+          hostPath:
+            path: /dev
+            type: Directory

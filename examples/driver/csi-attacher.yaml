@@ -1,0 +1,102 @@
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: ovc-disk-csi
+  name: ovc-disk-csi-driver-attacher
+  labels:
+    app: ovc-disk-csi-driver-attacher
+spec:
+  selector:
+    app: ovc-disk-csi-driver-attacher
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  namespace: ovc-disk-csi
+  name: ovc-disk-csi-driver-attacher
+spec:
+  serviceName: "ovc-disk-csi-driver-attacher"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ovc-disk-csi-driver-attacher
+  template:
+    metadata:
+      labels:
+        app: ovc-disk-csi-driver-attacher
+    spec:
+      serviceAccountName: csi-attacher
+      containers:
+        - name: csi-attacher
+          image: quay.io/k8scsi/csi-attacher:v1.0.0
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: Always
+          volumeMounts:
+          - name: socket-dir
+            mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: ovc-plugin
+          image: gigtech/ovc-disk-csi-driver
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nodeid=$(KUBE_NODE_NAME)"
+            - "--url=$(OVC_URL)"
+            - "--gid=$(OVC_GID)"
+            - "--account_id=$(OVC_ACCOUNT_ID)"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: OVC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: client_id
+            - name: OVC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: client_secret
+            - name: OVC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: url
+            - name: OVC_GID
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: gid
+            - name: OVC_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: account_id
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
