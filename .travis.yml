@@ -1,0 +1,32 @@
+dist: xenial
+language: go
+go:
+  - "1.11.x"
+
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: test
+      if: NOT tag IS present
+      script:
+        - make test
+        - make
+      on:
+        branch: master
+    - stage: deploy
+      if: tag IS present
+      script:
+        - GOOS=linux GOARCH=amd64 make VERSION=$(git describe --tags --abbrev=0)
+        - docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+        - make image VERSION=$(git describe --tags --abbrev=0)
+        - make push VERSION=$(git describe --tags --abbrev=0)
+      deploy:
+        provider: releases
+        api_key:
+          secure: "HCpsNfGZsu9F86sP7gaKYHZp1oqpZLBWxHPFvPYfVuKMMmCf7B1lewu6At/+xIvScKWh9p0jgpqaxkXxC4MQsJJjjfHDHN2QDKvk1WFBpJv5sNhKRTwwRUNctXfkMKYv4Lq+rJmXUdpKvOKC6xGp1xYF5jaDwZYMdPJRFkSqUfzr5ZR8J2c/dd3o5WLZCPcp1jq1dwzosGVzeepKyfBj/vCneMUShw82k4cyXAd5CiCTEjlC3Cy9cMOf9Zt95dGMjoevNmsxBu+FmLnp0h6wUNTa94kuMZu3ZtuTLi/Mu3B0if3/3Wy5vYb15bp5YSG/bDGRMfsVGFuH+gpDb09r42NOu1/dRd41k2htLnNIw0wosCsWQ5cQ+PeEYGQNxWwP46txDdjJXxt39zJRPgh94aUuCUEQ3BSMjEH0Ruv4nQxMK9JYe3Nj2YdWdvpEZcKGcM3aBBH2VTSRu1Izr44mqybv1FCbprcs4XtE1VSyBouDbdEgUXKajalYvOTYtb6bCESCYi0I5rc/HoAUT7ICKYoFlKUFbOA3pmfZ4l7YJbBuAbL6+hBIprPSXwJITe2W2RA7IVjJgTxgQ1sMPdXw4PghdyYosnTA5ol8EIGrXCYXpfM+05Gw8AXUpHxfE53fRy66fWROJgAohLVijVKPxTD5QxXnVW6eqtGu1jAw7E0="
+        file: bin/ovc-csi-driver
+        skip_cleanup: true
+        on:
+          tags: true
