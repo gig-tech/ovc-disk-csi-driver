@@ -24,7 +24,7 @@ ovc-csi-driver:
 
 .PHONY: test
 test:
-	go test -v -race ./pkg/...
+	go test -v -race ./driver/...
 
 .PHONY: test-sanity
 test-sanity:
