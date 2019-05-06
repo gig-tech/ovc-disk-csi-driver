@@ -15,11 +15,12 @@
 
 IMAGE=gigtech/ovc-disk-csi-driver
 VERSION=latest
+BUILD_OUTPUT=bin/ovc-csi-driver
 
 .PHONY: ovc-csi-driver
 ovc-csi-driver:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X github.com/gig-tech/csi.vendorVersion=${VERSION}" -o bin/ovc-csi-driver ./cmd/
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X github.com/gig-tech/csi.vendorVersion=${VERSION}" -o $(BUILD_OUTPUT) ./cmd/
 
 .PHONY: test
 test:
