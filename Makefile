@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IMAGE=gigtech/ovc-disk-csi-driver
+IMAGE=chrisvdg/ovc-disk-csi-driver
 VERSION=latest
 BUILD_OUTPUT=bin/ovc-csi-driver
 
