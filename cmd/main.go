@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/gig-tech/ovc-disk-csi-driver/driver"
 )
@@ -31,7 +32,9 @@ func main() {
 	var nodeID = flag.String("nodeid", "", "ID of the node")
 	flag.Parse()
 
-	drv, err := driver.NewDriver(*url, *endpoint, *nodeID, *accountID, *gid, nil)
+	ovcJWT := os.Getenv("OVC_JWT")
+
+	drv, err := driver.NewDriver(*url, *endpoint, *nodeID, *accountID, *gid, nil, ovcJWT)
 	if err != nil {
 		log.Fatalln(err)
 	}
