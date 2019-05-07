@@ -20,7 +20,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/gig-tech/ovc-disk-csi-driver/driver"
+	"github.com/chrisvdg/ovc-disk-csi-driver/driver"
 )
 
 func main() {

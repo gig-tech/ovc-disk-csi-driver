@@ -1,4 +1,4 @@
-module github.com/gig-tech/ovc-disk-csi-driver
+module github.com/chrisvdg/ovc-disk-csi-driver
 
 require (
 	github.com/container-storage-interface/spec v1.0.0
