@@ -3,6 +3,7 @@ package ovc
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -192,7 +193,7 @@ func (s *MachineServiceOp) GetByName(name string, cloudspaceID string) (*Machine
 			return s.client.Machines.Get(strconv.Itoa(mc.ID))
 		}
 	}
-	return nil, nil
+	return nil, fmt.Errorf("Machine %s not found", name)
 }
 
 // Create a new machine
@@ -229,7 +230,7 @@ func (s *MachineServiceOp) Update(machineConfig *MachineConfig) (string, error) 
 	return string(body), nil
 }
 
-//ht: reszize an existing machine
+// Resize an existing machine
 func (s *MachineServiceOp) Resize(machineConfig *MachineConfig) (string, error) {
 	machineJSON, err := json.Marshal(*machineConfig)
 	if err != nil {

@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+)
 
-	"github.com/dgrijalva/jwt-go"
+var (
+	// ErrAuthentication represents an authentication error from the server 401
+	ErrAuthentication = errors.New("OVC authentication error")
 )
 
 // Config used to connect to the API
@@ -28,7 +31,7 @@ type Credentials struct {
 
 // Client struct
 type Client struct {
-	JWT       string
+	JWT       *JWT
 	ServerURL string
 	Access    string
 
@@ -46,22 +49,31 @@ type Client struct {
 func (c *Client) Do(req *http.Request) ([]byte, error) {
 	var body []byte
 	client := &http.Client{}
-	req.Header.Set("Authorization", "bearer "+c.JWT)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	tokenString, err := c.JWT.Get()
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", tokenString))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
 
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Println("Status code: " + resp.Status)
-	log.Println("Body: " + string(body))
-	if resp.StatusCode > 202 {
+	log.Println("[DEBUG] OVC response status code: " + resp.Status)
+	log.Println("[DEBUG] OVC response body: " + string(body))
+	switch {
+	case resp.StatusCode == 401:
+		return nil, ErrAuthentication
+	case resp.StatusCode > 202:
 		return body, errors.New(string(body))
 	}
 
@@ -74,23 +86,33 @@ func NewClient(c *Config, url string) (*Client, error) {
 		return nil, fmt.Errorf("ClientID, ClientSecret and JWT are provided, please only set ClientID and ClientSecret or JWT")
 	}
 
+	var err error
 	client := &Client{}
 	tokenString := ""
-	claims := jwt.MapClaims{}
 
 	if c.JWT == "" {
-		tokenString = NewLogin(c)
+		tokenString, err = NewLogin(c)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		tokenString = c.JWT
 	}
-	jwt.ParseWithClaims(tokenString, claims, nil)
-	username, ok := claims["username"]
-	if !ok {
-		return nil, fmt.Errorf("JWT does not contain a username claim")
+	jwt, err := NewJWT(tokenString, "IYO")
+	if err != nil {
+		return nil, err
+	}
+
+	username, err := jwt.Claim("username")
+	if err != nil {
+		if err == ErrClaimNotPresent {
+			return nil, fmt.Errorf("Username not in JWT claims")
+		}
+		return nil, err
 	}
 
 	client.ServerURL = url + "/restmachine"
-	client.JWT = tokenString
+	client.JWT = jwt
 	client.Access = username.(string) + "@itsyouonline"
 
 	client.Machines = &MachineServiceOp{client: client}
@@ -106,8 +128,7 @@ func NewClient(c *Config, url string) (*Client, error) {
 }
 
 // NewLogin logs into the itsyouonline platform using the comfig struct
-func NewLogin(c *Config) string {
-
+func NewLogin(c *Config) (string, error) {
 	authForm := url.Values{}
 	authForm.Add("grant_type", "client_credentials")
 	authForm.Add("client_id", c.ClientID)
@@ -117,16 +138,24 @@ func NewLogin(c *Config) string {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("Error performing login request")
+	if resp != nil {
+		defer resp.Body.Close()
 	}
+	if err != nil {
+		return "", fmt.Errorf("Error fetching JWT: %s", err)
+	}
+
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal("Error reading body")
+		return "", fmt.Errorf("Error reading JWT request body: %s", err)
 	}
-	jwt := string(bodyBytes)
-	defer resp.Body.Close()
-	return jwt
+	bodyStr := string(bodyBytes)
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("Failed to fetch JWT: %s", bodyStr)
+	}
+
+	return bodyStr, nil
 }
 
 // GetLocation parses the URL to return the location of the API
