@@ -13,6 +13,13 @@ jobs:
       script:
         - make test
         - make
+        - |
+          if [ "$TRAVIS_PULL_REQUEST" = "false" ]
+          then
+            docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+            make image VERSION=latest
+            make push VERSION=latest
+          fi
       on:
         branch: master
     - stage: deploy
@@ -22,8 +29,6 @@ jobs:
         - docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
         - make image VERSION=$(git describe --tags --abbrev=0)
         - make push VERSION=$(git describe --tags --abbrev=0)
-        - make image VERSION=latest
-        - make push VERSION=latest
       deploy:
         provider: releases
         api_key:
