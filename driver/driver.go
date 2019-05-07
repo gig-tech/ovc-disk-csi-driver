@@ -20,7 +20,6 @@ import (
 	"context"
 	"net"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -53,12 +52,11 @@ var (
 )
 
 // NewDriver creates a new driver
-func NewDriver(url, ep, nodeid string, accountID, gid int, mounter *mount.SafeFormatAndMount) (*Driver, error) {
+func NewDriver(url, ep, nodeid string, accountID, gid int, mounter *mount.SafeFormatAndMount, ovcJWT string) (*Driver, error) {
 
 	c := &ovc.Config{
-		Hostname:     url,
-		ClientID:     os.Getenv("OVC_CLIENT_ID"),
-		ClientSecret: os.Getenv("OVC_CLIENT_SECRET"),
+		Hostname: url,
+		JWT:      ovcJWT,
 	}
 	client, err := ovc.NewClient(c, url)
 	if err != nil {
