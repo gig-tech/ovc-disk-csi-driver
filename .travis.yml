@@ -17,6 +17,7 @@ jobs:
           echo $TRAVIS_PULL_REQUEST
           if [ "$TRAVIS_PULL_REQUEST" = "false" ]
           then
+            echo "Pushing latest to docker"
             docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
             make image VERSION=latest
             make push VERSION=latest
