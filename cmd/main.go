@@ -18,12 +18,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/chrisvdg/ovc-disk-csi-driver/driver"
 )
 
 func main() {
+	fmt.Println("Hello")
 	var endpoint = flag.String("endpoint", "unix://tmp/csi.sock", "CSI Endpoint")
 	var url = flag.String("url", "", "OVC URL")
 	var gid = flag.Int("gid", 0, "OVC Grid ID")
