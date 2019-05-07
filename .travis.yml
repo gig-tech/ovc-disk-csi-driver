@@ -14,7 +14,7 @@ jobs:
         - make test
         - make
         - |
-          if [ "$TRAVIS_PULL_REQUEST" = "false" ]
+          if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]
           then
             docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
             make image VERSION=latest
