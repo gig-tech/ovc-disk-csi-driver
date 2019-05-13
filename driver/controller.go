@@ -30,15 +30,19 @@ import (
 )
 
 const (
-	_  = iota
+	_ = iota
+	// KB represents a kilobyte
 	KB = 1 << (10 * iota)
+	// MB represents a megabyte
 	MB
+	// GB represents a gigabyte
 	GB
+	// TB represents a terabyte
 	TB
 )
 
 const (
-	//createdByGig is used to tag a description to a disk created by the CSI Driver
+	// createdByGig is used to tag a description to a disk created by the CSI Driver
 	createdByGig = "Created by GIG-tech CSI Driver"
 
 	// minimumVolumeSizeInBytes is used to validate that the user is not trying
