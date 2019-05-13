@@ -360,15 +360,16 @@ func (d *Driver) GetCapacity(ctx context.Context, req *csi.GetCapacityRequest) (
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-// Expands the volume. Currently using csi1.0 which doesn't support expanding
-// func (d *Driver) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest) (*csi.ControllerExpandVolumeResponse, error) {
-// 	// TODO: no resize support
-// 	d.log.WithFields(logrus.Fields{
-// 		"volume_id": req.VolumeId,
-// 		"method":    "resize_volume",
-// 	}).Warn("create snapshot is not implemented")
-// 	return nil, status.Error(codes.Unimplemented, "")
-// }
+// ControllerExpandVolume expands the volume.
+func (d *Driver) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest) (*csi.ControllerExpandVolumeResponse, error) {
+	// TODO: no resize support
+	d.log.WithFields(logrus.Fields{
+		"volume_id": req.VolumeId,
+		"method":    "resize_volume",
+	}).Warn("create snapshot is not implemented")
+
+	return nil, status.Error(codes.Unimplemented, "")
+}
 
 // CreateSnapshot creates a snaphot of the volume
 // Currently not supported by the OVC API
