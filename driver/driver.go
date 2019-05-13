@@ -35,8 +35,8 @@ type Driver struct {
 	endpoint  string
 	client    *ovc.Client
 	accountID int
-	gid       int
-	nodeid    string
+	gridID    int
+	nodeID    string
 
 	volumeCaps     []csi.VolumeCapability_AccessMode
 	controllerCaps []csi.ControllerServiceCapability_RPC_Type
@@ -52,7 +52,7 @@ var (
 )
 
 // NewDriver creates a new driver
-func NewDriver(url, ep, nodeid string, accountID, gid int, mounter *mount.SafeFormatAndMount, ovcJWT string) (*Driver, error) {
+func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mount.SafeFormatAndMount, ovcJWT string) (*Driver, error) {
 
 	c := &ovc.Config{
 		Hostname: url,
@@ -68,15 +68,15 @@ func NewDriver(url, ep, nodeid string, accountID, gid int, mounter *mount.SafeFo
 	}
 
 	log := logrus.New().WithFields(logrus.Fields{
-		"node_id": nodeid,
+		"node_id": nodeID,
 	})
 
 	return &Driver{
-		gid:       gid,
+		gridID:    gridID,
 		client:    client,
-		endpoint:  ep,
+		endpoint:  endpoint,
 		accountID: accountID,
-		nodeid:    nodeid,
+		nodeID:    nodeID,
 		mounter:   mounter,
 		log:       log,
 		volumeCaps: []csi.VolumeCapability_AccessMode{
