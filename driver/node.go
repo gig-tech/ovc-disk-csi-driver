@@ -219,7 +219,7 @@ func (d *Driver) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (
 	d.log.Infof("NodeGetInfo: called with args %#v", req)
 
 	return &csi.NodeGetInfoResponse{
-		NodeId: d.nodeid,
+		NodeId: d.nodeID,
 	}, nil
 }
 

@@ -96,7 +96,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Description: createdByGig,
 		Size:        int(size / GB),
 		AccountID:   d.accountID,
-		GID:         d.gid,
+		GID:         d.gridID,
 		Type:        "D",
 	}
 
