@@ -23,6 +23,7 @@ import (
 
 	csi "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/jaypipes/ghw"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -228,15 +229,16 @@ func (d *Driver) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGetVolumeS
 	return nil, status.Error(codes.Unimplemented, "NodeGetVolumeStats is not implemented yet")
 }
 
-// Expands the volume. Currently using csi1.0 which doesn't support expanding
-// func (d *Driver) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
-// 	// TODO: no resize support
-// 	d.log.WithFields(logrus.Fields{
-// 		"volume_id": req.VolumeId,
-// 		"method":    "resize_volume",
-// 	}).Warn("create snapshot is not implemented")
-// 	return nil, status.Error(codes.Unimplemented, "")
-// }
+// NodeExpandVolume expands the volume.
+func (d *Driver) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
+	// TODO: no resize support
+	d.log.WithFields(logrus.Fields{
+		"volume_id": req.VolumeId,
+		"method":    "resize_volume",
+	}).Warn("create snapshot is not implemented")
+
+	return nil, status.Error(codes.Unimplemented, "")
+}
 
 func getDevicePath(i int) (string, error) {
 	block, err := ghw.Block()

@@ -1,7 +1,7 @@
 module github.com/gig-tech/ovc-disk-csi-driver
 
 require (
-	github.com/container-storage-interface/spec v1.0.0
+	github.com/container-storage-interface/spec v1.1.0
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gig-tech/ovc-sdk-go v1.0.0
 	github.com/jaypipes/ghw v0.0.0-20190423090301-93d787280a75
