@@ -370,7 +370,7 @@ func (d *Driver) ControllerExpandVolume(ctx context.Context, req *csi.Controller
 	d.log.WithFields(logrus.Fields{
 		"volume_id": req.VolumeId,
 		"method":    "resize_volume",
-	}).Warn("create snapshot is not implemented")
+	}).Warn("ControllerExpandVolume is not implemented")
 
 	return nil, status.Error(codes.Unimplemented, "")
 }
