@@ -235,7 +235,7 @@ func (d *Driver) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolume
 	d.log.WithFields(logrus.Fields{
 		"volume_id": req.VolumeId,
 		"method":    "resize_volume",
-	}).Warn("create snapshot is not implemented")
+	}).Warn("NodeExpandVolume is not implemented")
 
 	return nil, status.Error(codes.Unimplemented, "")
 }
