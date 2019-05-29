@@ -66,16 +66,11 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-            - name: OVC_CLIENT_ID
+            - name: OVC_JWT
               valueFrom:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
-                  key: client_id
-            - name: OVC_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: ovc-disk-csi-driver-secret
-                  key: client_secret
+                  key: client_jwt
             - name: OVC_URL
               valueFrom:
                 secretKeyRef:
