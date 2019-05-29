@@ -1,7 +1,6 @@
 Edit `driver/secret.yaml`, fill in
 
-* client_id:
-* client_secret:
+* client_jwt:
 * url:
 * gid: ""
 * account_id: ""
