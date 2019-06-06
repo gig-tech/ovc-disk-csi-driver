@@ -18,12 +18,14 @@ package driver
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 
-	csi "github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/gig-tech/ovc-sdk-go/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -53,7 +55,6 @@ var (
 
 // NewDriver creates a new driver
 func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mount.SafeFormatAndMount, ovcJWT string) (*Driver, error) {
-
 	c := &ovc.Config{
 		Hostname: url,
 		JWT:      ovcJWT,
@@ -65,6 +66,13 @@ func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mou
 
 	if mounter == nil {
 		mounter = newSafeMounter()
+	}
+
+	if nodeID == "" {
+		nodeID, err = getNodeID(client)
+		if err != nil {
+			return nil, fmt.Errorf("something went wrong fetching the node ID %s", err)
+		}
 	}
 
 	log := logrus.New().WithFields(logrus.Fields{
@@ -102,6 +110,17 @@ func (d *Driver) Run() error {
 	}
 
 	addr := path.Join(u.Host, filepath.FromSlash(u.Path))
+
+	switch u.Scheme {
+	case "unix", "unixgram", "unixpacket":
+		// Check if file already exists and clean it up
+		if _, err := os.Stat(u.Path); err == nil {
+			err := os.Remove(u.Path)
+			if err != nil {
+				return fmt.Errorf("failed to remove socket file (%s): %s", u.Path, err)
+			}
+		}
+	}
 
 	listener, err := net.Listen(u.Scheme, addr)
 	if err != nil {

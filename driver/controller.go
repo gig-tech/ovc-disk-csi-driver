@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	csi "github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/gig-tech/ovc-sdk-go/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -74,9 +74,8 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		return nil, status.Errorf(codes.OutOfRange, "invalid capacity range: %v", err)
 	}
 
-	volumeName := req.Name
-
 	// get volume first, if it's created do no thing
+	volumeName := req.Name
 	volumes, err := d.client.Disks.List(d.accountID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -85,7 +84,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 	// volume already exist, do nothing
 	for _, vol := range *volumes {
 		if vol.Name == req.Name {
-			d.log.Info("Volume was already created")
+			d.log.Debug("Volume was already created")
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
 					VolumeId:      strconv.Itoa(vol.ID),
@@ -110,9 +109,9 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		"method":                  "create_volume",
 		"volume_capabilities":     req.VolumeCapabilities,
 	})
-	ll.Info("create volume called")
+	ll.Debug("Create volume called")
 
-	ll.WithField("volume_req", diskConfig).Info("creating volume")
+	ll.WithField("volume_req", diskConfig).Debug("Creating volume")
 	volID, err := d.client.Disks.Create(diskConfig)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -122,31 +121,24 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Volume: &csi.Volume{
 			VolumeId:      volID,
 			CapacityBytes: size,
-			AccessibleTopology: []*csi.Topology{
-				{
-					Segments: map[string]string{
-						"region": "switzerland",
-					},
-				},
-			},
 		},
 	}
 
-	ll.WithField("response", resp).Info("volume created")
+	ll.WithField("response", resp).Debug("Volume created")
 	return resp, nil
 }
 
-// DeleteVolume deletes the given volume. The function is idempotent.
+// DeleteVolume deletes the given volume.
 func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
 	if req.VolumeId == "" {
-		return nil, status.Error(codes.InvalidArgument, "DeleteVolume Volume ID must be provided")
+		return nil, status.Error(codes.InvalidArgument, "Volume ID must be provided")
 	}
 
 	ll := d.log.WithFields(logrus.Fields{
 		"volume_id": req.VolumeId,
 		"method":    "delete_volume",
 	})
-	ll.Info("delete volume called")
+	ll.Debug("Delete volume called")
 
 	volID, err := strconv.Atoi(req.VolumeId)
 	if err != nil {
@@ -164,7 +156,7 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	ll.Info("volume is deleted")
+	ll.Debug("Volume is deleted")
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
@@ -191,7 +183,7 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		"node_id":   req.NodeId,
 		"method":    "controller_publish_volume",
 	})
-	ll.Info("controller publish volume called")
+	ll.Debug("Controller publish volume called")
 
 	// check if volume exist before trying to attach it
 	vol, err := d.client.Disks.Get(req.VolumeId)
@@ -235,7 +227,7 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		return nil, err
 	}
 
-	ll.Info("volume is attached")
+	ll.Debug("Volume is attached")
 	return &csi.ControllerPublishVolumeResponse{
 		PublishContext: map[string]string{
 			"PublishInfoVolumeName": vol.Name,
@@ -268,7 +260,7 @@ func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.Control
 		"machine_id": machineID,
 		"method":     "controller_unpublish_volume",
 	})
-	ll.Info("controller unpublish volume called")
+	ll.Debug("Controller unpublish volume called")
 
 	diskConfig := &ovc.DiskAttachConfig{
 		MachineID: machineID,
@@ -277,10 +269,10 @@ func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.Control
 
 	err = d.client.Disks.Detach(diskConfig)
 	if err != nil {
-		ll.Infof("fail detatching the volume: %q", err)
+		ll.Debugf("Failed to detach volume %s from node %s: %q", req.VolumeId, req.NodeId, err)
 		return nil, err
 	}
-	ll.Info("volume is detached")
+	ll.Debug("Volume is detached")
 	return &csi.ControllerUnpublishVolumeResponse{}, nil
 }
 
@@ -301,7 +293,7 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 		"supported_capabilities": d.volumeCaps,
 		"method":                 "validate_volume_capabilities",
 	})
-	ll.Info("validate volume capabilities called")
+	ll.Debug("Validate volume capabilities called")
 
 	if _, err := d.client.Disks.Get(req.VolumeId); err != nil {
 		return nil, status.Error(codes.NotFound, "Volume not found")
@@ -328,7 +320,7 @@ func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (
 		"account_id": d.accountID,
 		"method":     "list_volumes",
 	})
-	ll.Info("list volumes called")
+	ll.Debug("List volumes called")
 
 	disks, err := d.client.Disks.List(d.accountID)
 	if err != nil {
@@ -350,7 +342,7 @@ func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (
 		Entries: entries,
 	}
 
-	ll.WithField("response", resp).Info("volumes listed")
+	ll.WithField("response", resp).Debug("Volumes listed")
 	return resp, nil
 }
 
@@ -425,7 +417,7 @@ func (d *Driver) ControllerGetCapabilities(ctx context.Context, req *csi.Control
 
 	d.log.WithFields(logrus.Fields{
 		"method": "controller_get_capabilities",
-	}).Info("controller get capabilities called")
+	}).Debug("Controller get capabilities called")
 	return &csi.ControllerGetCapabilitiesResponse{Capabilities: caps}, nil
 }
 
