@@ -167,8 +167,14 @@ func (d *Driver) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolu
 		return nil, status.Errorf(codes.Internal, "Could not create dir %q: %v", target, err)
 	}
 
+	attributes := req.GetVolumeContext()
+	fsType, exists := attributes["fsType"]
+	if !exists || fsType == "" {
+		fsType = defaultFsType
+	}
+
 	d.log.Debugf("NodePublishVolume: mounting %s at %s", source, target)
-	if err := d.mounter.Interface.Mount(source, target, "ext4", options); err != nil {
+	if err := d.mounter.Interface.Mount(source, target, fsType, options); err != nil {
 		os.Remove(target)
 		return nil, status.Errorf(codes.Internal, "Could not mount %q at %q: %v", source, target, err)
 	}
