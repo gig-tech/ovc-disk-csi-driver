@@ -18,7 +18,8 @@ github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeME
 github.com/gig-tech/ovc-sdk-go v0.2.0 h1:iph1MhGrJ8Kp8x6Q4mT+wDr4QBC414VMuAZQP5lOkc8=
 github.com/gig-tech/ovc-sdk-go v0.2.0/go.mod h1:lxRFCmRixU3+Xx6Bpep9B8JlUdxs2hA80yihbmc02Pc=
 github.com/gig-tech/ovc-sdk-go v1.0.0 h1:E2cx7zq+ee9GXv1HFEnGWREMq408PhZFmqMI11nuIYI=
-github.com/gig-tech/ovc-sdk-go v1.0.0/go.mod h1:fJ/X+HOGP/sgapmU4p7emmgxHl9Br0KiLuxpLsyrsbs=
+github.com/gig-tech/ovc-sdk-go v1.0.1-0.20190606095107-43813dbb4e9d h1:QyPKzISFuXsWJVii9BYcb6NvOs2G2zlZNXwVSPxNtC4=
+github.com/gig-tech/ovc-sdk-go v1.0.1-0.20190606095107-43813dbb4e9d/go.mod h1:fJ/X+HOGP/sgapmU4p7emmgxHl9Br0KiLuxpLsyrsbs=
 github.com/gogo/protobuf v0.0.0-20171007142547-342cbe0a0415/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20160516000752-02826c3e7903/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
@@ -97,6 +98,8 @@ howett.net/plist v0.0.0-20181124034731-591f970eefbb h1:jhnBjNi9UFpfpl8YZhA9CrOqp
 howett.net/plist v0.0.0-20181124034731-591f970eefbb/go.mod h1:vMygbs4qMhSZSc4lCUl2OEE+rDiIIJAIdR4m7MiMcm0=
 k8s.io/apimachinery v0.0.0-20190424052434-11f1676e3da4 h1:EGT8q6zM/WrpWPPSvC5Jf9Fykae4T+roVnTugxjyoAM=
 k8s.io/apimachinery v0.0.0-20190424052434-11f1676e3da4/go.mod h1:5CBnzrKYGHzv9ZsSKmQ8wHt4XI4/TUBPDwYM9FlZMyw=
+k8s.io/client-go v11.0.0+incompatible h1:LBbX2+lOwY9flffWlJM7f1Ct8V2SRNiMRDFeiwnJo9o=
+k8s.io/client-go v11.0.0+incompatible/go.mod h1:7vJpHMYJwNQCWgzmNV+VYUl1zCObLyodBc8nIyt8L5s=
 k8s.io/klog v0.3.0 h1:0VPpR+sizsiivjIfIAQH/rl8tan6jvWkS7lU+0di3lE=
 k8s.io/klog v0.3.0/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
 k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30/go.mod h1:BXM9ceUBTj2QnfH2MK1odQs778ajze1RxcmP6S8RVVc=

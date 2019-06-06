@@ -43,6 +43,7 @@ type Client struct {
 	Templates    TemplateService
 	Sizes        SizesService
 	Images       ImageService
+	Ipsec        IpsecService
 }
 
 // Do sends and API Request and returns the body as an array of bytes
@@ -68,6 +69,7 @@ func (c *Client) Do(req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 
+	log.Println("[DEBUG] OVC call: " + req.URL.Path)
 	log.Println("[DEBUG] OVC response status code: " + resp.Status)
 	log.Println("[DEBUG] OVC response body: " + string(body))
 	switch {
@@ -123,6 +125,7 @@ func NewClient(c *Config, url string) (*Client, error) {
 	client.Templates = &TemplateServiceOp{client: client}
 	client.Sizes = &SizesServiceOp{client: client}
 	client.Images = &ImageServiceOp{client: client}
+	client.Ipsec = &IpsecServiceOp{client: client}
 
 	return client, nil
 }

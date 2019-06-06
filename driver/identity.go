@@ -19,7 +19,7 @@ package driver
 import (
 	"context"
 
-	csi "github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 )
 
 // GetPluginInfo returns metadata of the plugin

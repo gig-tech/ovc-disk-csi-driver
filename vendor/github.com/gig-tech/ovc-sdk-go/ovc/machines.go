@@ -113,6 +113,7 @@ type MachineService interface {
 	List(int) (*MachineList, error)
 	Get(string) (*MachineInfo, error)
 	GetByName(string, string) (*MachineInfo, error)
+	GetByReferenceID(string) (*MachineInfo, error)
 	Create(*MachineConfig) (string, error)
 	Update(*MachineConfig) (string, error)
 	Resize(*MachineConfig) (string, error)
@@ -194,6 +195,29 @@ func (s *MachineServiceOp) GetByName(name string, cloudspaceID string) (*Machine
 		}
 	}
 	return nil, fmt.Errorf("Machine %s not found", name)
+}
+
+// GetByReferenceID gets an individual machine from its reference ID
+func (s *MachineServiceOp) GetByReferenceID(referenceID string) (*MachineInfo, error) {
+	referenceIDMap := make(map[string]interface{})
+	referenceIDMap["referenceId"] = referenceID
+	referenceIDJson, err := json.Marshal(referenceIDMap)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/machines/getByReferenceId", bytes.NewBuffer(referenceIDJson))
+	if err != nil {
+		return nil, err
+	}
+	body, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Machines.Get(string(body))
 }
 
 // Create a new machine

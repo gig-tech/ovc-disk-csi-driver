@@ -1,3 +1,5 @@
+// +build linux
+
 /*
 Copyright 2018-2019 GIG TECHNOLOGY NV
 
@@ -14,30 +16,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package driver
 
 import (
-	"flag"
-	"log"
-	"os"
+	"io/ioutil"
+	"strconv"
+	"strings"
 
-	"github.com/gig-tech/ovc-disk-csi-driver/driver"
+	"github.com/gig-tech/ovc-sdk-go/ovc"
 )
 
-func main() {
-	var endpoint = flag.String("endpoint", "unix://tmp/csi.sock", "CSI Endpoint")
-	var url = flag.String("url", "", "OVC URL")
-	var gid = flag.Int("gid", 0, "OVC Grid ID")
-	var accountID = flag.Int("account_id", 0, "Account ID")
-	flag.Parse()
+const uuidPath = "/sys/class/dmi/id/product_uuid"
 
-	ovcJWT := os.Getenv("OVC_JWT")
-
-	drv, err := driver.NewDriver(*url, *endpoint, "", *accountID, *gid, nil, ovcJWT)
+func getNodeID(client *ovc.Client) (string, error) {
+	rawID, err := ioutil.ReadFile(uuidPath)
 	if err != nil {
-		log.Fatalln(err)
+		return "", err
 	}
-	if err := drv.Run(); err != nil {
-		log.Fatalln(err)
+	id := strings.ToLower(strings.TrimSpace(string(rawID)))
+
+	machine, err := client.Machines.GetByReferenceID(id)
+	if err != nil {
+		return "", err
 	}
+
+	return strconv.Itoa(machine.ID), nil
 }
