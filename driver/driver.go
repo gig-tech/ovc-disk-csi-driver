@@ -54,7 +54,7 @@ var (
 )
 
 // NewDriver creates a new driver
-func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mount.SafeFormatAndMount, ovcJWT string) (*Driver, error) {
+func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mount.SafeFormatAndMount, ovcJWT string, verbose bool) (*Driver, error) {
 	c := &ovc.Config{
 		Hostname: url,
 		JWT:      ovcJWT,
@@ -75,7 +75,13 @@ func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mou
 		}
 	}
 
-	log := logrus.New().WithFields(logrus.Fields{
+	log := logrus.New()
+	if verbose {
+		log.SetLevel(logrus.DebugLevel)
+	} else {
+		log.SetLevel(logrus.InfoLevel)
+	}
+	logEntry := log.WithFields(logrus.Fields{
 		"node_id": nodeID,
 	})
 
@@ -86,7 +92,7 @@ func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mou
 		accountID: accountID,
 		nodeID:    nodeID,
 		mounter:   mounter,
-		log:       log,
+		log:       logEntry,
 		volumeCaps: []csi.VolumeCapability_AccessMode{
 			{
 				Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
