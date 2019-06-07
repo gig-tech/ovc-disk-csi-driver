@@ -29,11 +29,14 @@ func main() {
 	var url = flag.String("url", "", "OVC URL")
 	var gid = flag.Int("gid", 0, "OVC Grid ID")
 	var accountID = flag.Int("account_id", 0, "Account ID")
+	var verbose = flag.Bool("verbose", false, "Set verbose output")
 	flag.Parse()
 
 	ovcJWT := os.Getenv("OVC_JWT")
 
-	drv, err := driver.NewDriver(*url, *endpoint, "", *accountID, *gid, nil, ovcJWT)
+	print(verbose)
+
+	drv, err := driver.NewDriver(*url, *endpoint, "", *accountID, *gid, nil, ovcJWT, *verbose)
 	if err != nil {
 		log.Fatalln(err)
 	}

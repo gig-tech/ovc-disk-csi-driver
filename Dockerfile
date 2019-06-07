@@ -1,7 +1,8 @@
 FROM golang:1.11.2-alpine3.8 AS builder
 WORKDIR /go/src/github.com/gig-tech/ovc-disk-csi-driver
 ADD . .
-RUN apk add --no-cache make && make
+RUN apk add --no-cache make
+RUN make
 
 
 FROM alpine:3.8
