@@ -3,13 +3,15 @@ module github.com/gig-tech/ovc-disk-csi-driver
 require (
 	github.com/container-storage-interface/spec v1.1.0
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/gig-tech/ovc-sdk-go v1.0.1-0.20190606095107-43813dbb4e9d
+	github.com/gig-tech/ovc-sdk-go v1.1.0
 	github.com/jaypipes/ghw v0.0.0-20190423090301-93d787280a75
 	github.com/jaypipes/pcidb v0.0.0-20190216134740-adf5a9192458 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/sirupsen/logrus v1.4.1
+	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/objx v0.2.0 // indirect
+	golang.org/x/sys v0.0.0-20190606203320-7fc4e5ec1444 // indirect
 	google.golang.org/grpc v1.20.1
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	k8s.io/apimachinery v0.0.0-20190424052434-11f1676e3da4 // indirect
