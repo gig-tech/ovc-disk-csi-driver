@@ -107,8 +107,6 @@ type MachineInfo struct {
 
 // MachineService is an interface for interfacing with the Machine
 // endpoints of the OVC API
-// See: https://ch-lug-dc01-001.gig.tech/g8vdc/#/ApiDocs
-//ht: added resize
 type MachineService interface {
 	List(int) (*MachineList, error)
 	Get(string) (*MachineInfo, error)
@@ -129,8 +127,6 @@ type MachineServiceOp struct {
 	client *Client
 }
 
-var _ MachineService = &MachineServiceOp{}
-
 // List all machines
 func (s *MachineServiceOp) List(cloudSpaceID int) (*MachineList, error) {
 	cloudSpaceIDMap := make(map[string]interface{})
@@ -147,11 +143,12 @@ func (s *MachineServiceOp) List(cloudSpaceID int) (*MachineList, error) {
 	if err != nil {
 		return nil, err
 	}
-	var machines = new(MachineList)
+	machines := new(MachineList)
 	err = json.Unmarshal(body, &machines)
 	if err != nil {
 		return nil, err
 	}
+
 	return machines, nil
 }
 
@@ -171,11 +168,12 @@ func (s *MachineServiceOp) Get(id string) (*MachineInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	var machineInfo = new(MachineInfo)
+	machineInfo := new(MachineInfo)
 	err = json.Unmarshal(body, &machineInfo)
 	if err != nil {
 		return nil, err
 	}
+
 	return machineInfo, nil
 }
 
@@ -194,6 +192,7 @@ func (s *MachineServiceOp) GetByName(name string, cloudspaceID string) (*Machine
 			return s.client.Machines.Get(strconv.Itoa(mc.ID))
 		}
 	}
+
 	return nil, fmt.Errorf("Machine %s not found", name)
 }
 
@@ -205,9 +204,7 @@ func (s *MachineServiceOp) GetByReferenceID(referenceID string) (*MachineInfo, e
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/machines/getByReferenceId", bytes.NewBuffer(referenceIDJson))
 	if err != nil {
 		return nil, err
@@ -234,6 +231,7 @@ func (s *MachineServiceOp) Create(machineConfig *MachineConfig) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
 	return string(body), nil
 }
 
@@ -251,6 +249,7 @@ func (s *MachineServiceOp) Update(machineConfig *MachineConfig) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
 	return string(body), nil
 }
 
@@ -268,6 +267,7 @@ func (s *MachineServiceOp) Resize(machineConfig *MachineConfig) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
 	return string(body), nil
 }
 
@@ -282,10 +282,8 @@ func (s *MachineServiceOp) Delete(machineConfig *MachineConfig) error {
 		return err
 	}
 	_, err = s.client.Do(req)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
 // DeleteByID deletes an existing machine by ID
@@ -302,10 +300,8 @@ func (s *MachineServiceOp) DeleteByID(machineID int) error {
 		return err
 	}
 	_, err = s.client.Do(req)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
 // Template creates an image of the existing machine by ID
@@ -322,10 +318,8 @@ func (s *MachineServiceOp) Template(machineID int, templateName string) error {
 		return err
 	}
 	_, err = s.client.Do(req)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
 // Shutdown shuts a machine down
@@ -342,8 +336,6 @@ func (s *MachineServiceOp) Shutdown(machineID int) error {
 		return err
 	}
 	_, err = s.client.Do(req)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
