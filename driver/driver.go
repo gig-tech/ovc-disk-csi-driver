@@ -58,6 +58,7 @@ func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mou
 	c := &ovc.Config{
 		Hostname: url,
 		JWT:      ovcJWT,
+		Verbose:  verbose,
 	}
 	client, err := ovc.NewClient(c, url)
 	if err != nil {
@@ -150,6 +151,7 @@ func (d *Driver) Run() error {
 	csi.RegisterNodeServer(d.srv, d)
 
 	d.log.Infof("Listening for connections on address: %#v", listener.Addr())
+
 	return d.srv.Serve(listener)
 }
 

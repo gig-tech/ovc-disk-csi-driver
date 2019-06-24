@@ -52,7 +52,7 @@ type CloudSpace struct {
 		UserGroupID  string `json:"userGroupId"`
 	} `json:"acl"`
 	Secret          string `json:"secret"`
-	Gid             int    `json:"gid"`
+	GridID          int    `json:"gid"`
 	Location        string `json:"location"`
 	Publicipaddress string `json:"publicipaddress"`
 	PrivateNetwork  string `json:"privatenetwork"`
@@ -81,7 +81,7 @@ type CloudSpaceList []struct {
 		GUID        string `json:"guid"`
 		Type        string `json:"type"`
 	} `json:"accountAcl"`
-	Gid             int    `json:"gid"`
+	GridID          int    `json:"gid"`
 	Location        string `json:"location"`
 	Publicipaddress string `json:"publicipaddress"`
 	AccountName     string `json:"accountName"`

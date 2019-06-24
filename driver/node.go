@@ -22,7 +22,6 @@ import (
 	"os"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/jaypipes/ghw"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -64,7 +63,7 @@ func (d *Driver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRe
 		return nil, err
 	}
 
-	source, err := getDevicePath(diskInfo.DeviceName)
+	source, err := getDevicePath(d.log, diskInfo.PCIBus, diskInfo.PCISlot)
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +217,7 @@ func (d *Driver) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabi
 		}
 		caps = append(caps, c)
 	}
+
 	return &csi.NodeGetCapabilitiesResponse{Capabilities: caps}, nil
 }
 
@@ -237,6 +237,7 @@ func (d *Driver) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGetVolumeS
 		"volume_id": req.VolumeId,
 		"method":    "resize_volume",
 	}).Warn("NodeGetVolumeStats is not implemented")
+
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
@@ -248,19 +249,4 @@ func (d *Driver) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolume
 	}).Warn("NodeExpandVolume is not implemented")
 
 	return nil, status.Error(codes.Unimplemented, "")
-}
-
-func getDevicePath(dev string) (string, error) {
-	block, err := ghw.Block()
-	if err != nil {
-		return "", err
-	}
-
-	for _, d := range block.Disks {
-		if d.Name == dev {
-			return fmt.Sprintf("/dev/%s", d.Name), nil
-		}
-	}
-
-	return "", fmt.Errorf("Device %s not found", dev)
 }

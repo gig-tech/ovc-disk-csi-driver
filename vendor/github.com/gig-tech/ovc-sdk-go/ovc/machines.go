@@ -55,14 +55,14 @@ type MachineConfig struct {
 
 // MachineInfo contains all information related to a cloudspace
 type MachineInfo struct {
-	Cloudspaceid int    `json:"cloudspaceid"`
+	CloudspaceID int    `json:"cloudspaceid"`
 	Status       string `json:"status"`
 	UpdateTime   int    `json:"updateTime"`
 	Hostname     string `json:"hostname"`
 	Locked       bool   `json:"locked"`
 	Name         string `json:"name"`
 	CreationTime int    `json:"creationTime"`
-	Sizeid       int    `json:"sizeid"`
+	SizeID       int    `json:"sizeid"`
 	Disks        []struct {
 		Status  string `json:"status,omitempty"`
 		SizeMax int    `json:"sizeMax,omitempty"`
@@ -98,7 +98,7 @@ type MachineInfo struct {
 		GUID        string `json:"guid"`
 		Type        string `json:"type"`
 	} `json:"interfaces"`
-	Imageid     int         `json:"imageid"`
+	ImageID     int         `json:"imageid"`
 	ID          int         `json:"id"`
 	Memory      int         `json:"memory"`
 	Vcpus       int         `json:"vcpus"`
