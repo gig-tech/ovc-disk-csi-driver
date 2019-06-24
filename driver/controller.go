@@ -99,7 +99,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Description: createdByGig,
 		Size:        int(size / GB),
 		AccountID:   d.accountID,
-		GID:         d.gridID,
+		GridID:      d.gridID,
 		Type:        "D",
 	}
 
@@ -125,6 +125,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 	}
 
 	ll.WithField("response", resp).Debug("Volume created")
+
 	return resp, nil
 }
 
@@ -157,6 +158,7 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 	}
 
 	ll.Debug("Volume is deleted")
+
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
@@ -178,12 +180,12 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		return nil, status.Error(codes.AlreadyExists, "read only Volumes are not supported")
 	}
 
-	ll := d.log.WithFields(logrus.Fields{
+	logger := d.log.WithFields(logrus.Fields{
 		"volume_id": req.VolumeId,
 		"node_id":   req.NodeId,
 		"method":    "controller_publish_volume",
 	})
-	ll.Debug("Controller publish volume called")
+	logger.Debug("Controller publish volume called")
 
 	// check if volume exist before trying to attach it
 	vol, err := d.client.Disks.Get(req.VolumeId)
@@ -191,7 +193,7 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		return nil, err
 	}
 
-	_, err = d.client.Machines.Get(req.NodeId)
+	machine, err := d.client.Machines.Get(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
@@ -206,39 +208,72 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		return nil, err
 	}
 
+	// attach the volume to the correct node
 	diskConfig := &ovc.DiskAttachConfig{
 		MachineID: machineID,
 		DiskID:    diskID,
 	}
-
-	// attach the volume to the correct node
 	err = d.client.Disks.Attach(diskConfig)
 	if err != nil {
-		if strings.Contains(err.Error(), "This disk is already attached to another machine") {
-			ll.WithFields(logrus.Fields{
-				"error": err,
-			}).Warn("assuming volume is attached already")
+		if nodeHasDisk(machine, diskID) {
+			logger.Debug("Disk was already attached to machine")
+			return controllerPublishVolumeSuccessResponse(vol.Name, req.NodeId, vol.ID)
 		}
-		return nil, err
+
+		machines, err := d.client.Machines.List(machine.CloudspaceID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, m := range *machines {
+			machine, err := d.client.Machines.Get(strconv.Itoa(m.ID))
+			if err != nil {
+				return nil, err
+			}
+			if nodeHasDisk(machine, diskID) {
+				logger.Debugf("Disk attached to %d, detaching...", machine.ID)
+				detachConfig := &ovc.DiskAttachConfig{
+					MachineID: machineID,
+					DiskID:    diskID,
+				}
+				d.client.Disks.Detach(detachConfig)
+				break
+			}
+		}
+
+		err = d.client.Disks.Attach(diskConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	disk, err := d.client.Disks.Get(req.VolumeId)
-	if err != nil {
-		return nil, err
-	}
+	logger.Debug("Volume is attached")
 
-	ll.Debug("Volume is attached")
+	return controllerPublishVolumeSuccessResponse(vol.Name, req.NodeId, vol.ID)
+}
+
+func controllerPublishVolumeSuccessResponse(volumeName, nodeID string, volumeID int) (*csi.ControllerPublishVolumeResponse, error) {
 	return &csi.ControllerPublishVolumeResponse{
 		PublishContext: map[string]string{
-			"PublishInfoVolumeName": vol.Name,
-			"PublishInfoVolumeID":   strconv.Itoa(vol.ID),
-			"PublishInfoNodeID":     req.NodeId,
-			"OrderNumber":           strconv.Itoa(disk.Order),
+			"PublishInfoVolumeName": volumeName,
+			"PublishInfoVolumeID":   strconv.Itoa(volumeID),
+			"PublishInfoNodeID":     nodeID,
 		},
 	}, nil
 }
 
-// ControllerUnpublishVolume deattaches the given volume from the node
+// nodeHasDiskChecks if specified node has specified disk attached
+func nodeHasDisk(machine *ovc.MachineInfo, diskID int) bool {
+	for _, disk := range machine.Disks {
+		if disk.ID == diskID {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ControllerUnpublishVolume detaches the given volume from the node
 func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	if req.VolumeId == "" {
 		return nil, status.Error(codes.InvalidArgument, "ControllerPublishVolume Volume ID must be provided")
@@ -273,6 +308,7 @@ func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.Control
 		return nil, err
 	}
 	ll.Debug("Volume is detached")
+
 	return &csi.ControllerUnpublishVolumeResponse{}, nil
 }
 
@@ -308,6 +344,7 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 	if d.isValidVolumeCapabilities(volCaps) {
 		confirmed = &csi.ValidateVolumeCapabilitiesResponse_Confirmed{VolumeCapabilities: volCaps}
 	}
+
 	return &csi.ValidateVolumeCapabilitiesResponse{
 		Confirmed: confirmed,
 	}, nil
@@ -343,6 +380,7 @@ func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (
 	}
 
 	ll.WithField("response", resp).Debug("Volumes listed")
+
 	return resp, nil
 }
 
@@ -353,6 +391,7 @@ func (d *Driver) GetCapacity(ctx context.Context, req *csi.GetCapacityRequest) (
 		"params": req.Parameters,
 		"method": "get_capacity",
 	}).Warn("get capacity is not implemented")
+
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
@@ -375,6 +414,7 @@ func (d *Driver) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequ
 		"params": req.Parameters,
 		"method": "create_snapshot",
 	}).Warn("create snapshot is not implemented")
+
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
@@ -386,6 +426,7 @@ func (d *Driver) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapshotRequ
 		"snapshot_id": req.SnapshotId,
 		"method":      "delete_snapshot",
 	}).Warn("delete snapshot is not implemented")
+
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
@@ -397,6 +438,7 @@ func (d *Driver) ListSnapshots(ctx context.Context, req *csi.ListSnapshotsReques
 		"snapshot_id": req.SnapshotId,
 		"method":      "list_snapshot",
 	}).Warn("list snapshot is not implemented")
+
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
@@ -418,6 +460,7 @@ func (d *Driver) ControllerGetCapabilities(ctx context.Context, req *csi.Control
 	d.log.WithFields(logrus.Fields{
 		"method": "controller_get_capabilities",
 	}).Debug("Controller get capabilities called")
+
 	return &csi.ControllerGetCapabilitiesResponse{Capabilities: caps}, nil
 }
 
@@ -497,6 +540,7 @@ func formatBytes(inputBytes int64) string {
 
 	result := strconv.FormatFloat(output, 'f', 1, 64)
 	result = strings.TrimSuffix(result, ".0")
+
 	return result + unit
 }
 
@@ -516,5 +560,6 @@ func (d *Driver) isValidVolumeCapabilities(volCaps []*csi.VolumeCapability) bool
 			foundAll = false
 		}
 	}
+
 	return foundAll
 }

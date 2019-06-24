@@ -10,7 +10,7 @@ import (
 type ImageConfig struct {
 	Name      string `json:"name"`
 	URL       string `json:"url"`
-	GID       int    `json:"gid"`
+	GridID    int    `json:"gid"`
 	BootType  string `json:"boottype"`
 	Type      string `json:"imagetype"`
 	Username  string `json:"username"`

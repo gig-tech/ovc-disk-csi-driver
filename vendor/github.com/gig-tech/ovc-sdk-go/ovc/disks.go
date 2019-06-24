@@ -11,7 +11,7 @@ import (
 // DiskConfig is used when creating a disk
 type DiskConfig struct {
 	AccountID   int    `json:"accountId,omitempty"`
-	GID         int    `json:"gid,omitempty"`
+	GridID      int    `json:"gid,omitempty"`
 	MachineID   int    `json:"machineId,omitempty"`
 	DiskName    string `json:"diskName,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -45,11 +45,12 @@ type DiskInfo struct {
 	Images              []interface{} `json:"images"`
 	GUID                int           `json:"guid"`
 	ID                  int           `json:"id"`
-	DeviceName          string        `json:"devicename"`
+	PCIBus              string        `json:"pci_bus"`
+	PCISlot             string        `json:"pci_slot"`
 	AccountID           int           `json:"accountId"`
 	SizeUsed            int           `json:"sizeUsed"`
 	Descr               string        `json:"descr"`
-	Gid                 int           `json:"gid"`
+	GridID              int           `json:"gid"`
 	Role                string        `json:"role"`
 	Params              string        `json:"params"`
 	Type                string        `json:"type"`
@@ -287,7 +288,7 @@ func (s *DiskServiceOp) Get(diskID string) (*DiskInfo, error) {
 	return diskInfo, nil
 }
 
-// GetByName gets a disk by its maxsize
+// GetByName gets a disk by its name
 func (s *DiskServiceOp) GetByName(name string, accountID string) (*DiskInfo, error) {
 	aid, err := strconv.Atoi(accountID)
 	if err != nil {
@@ -304,7 +305,7 @@ func (s *DiskServiceOp) GetByName(name string, accountID string) (*DiskInfo, err
 		}
 	}
 
-	return nil, errors.New("Could not find disk based on maxsize")
+	return nil, errors.New("Could not find disk based on name")
 }
 
 // Resize resizes a disk. Can only increase the size of a disk
