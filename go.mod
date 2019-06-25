@@ -7,7 +7,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/sys v0.0.0-20190621203818-d432491b9138 // indirect
+	golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0 // indirect
 	google.golang.org/grpc v1.20.1
 	k8s.io/apimachinery v0.0.0-20190424052434-11f1676e3da4 // indirect
 	k8s.io/kubernetes v1.14.1
