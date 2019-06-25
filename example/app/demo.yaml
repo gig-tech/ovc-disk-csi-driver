@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ovc-disk-csi-driver-replication-controller
-  namespace: ovc-disk-csi-demo
+  name: demo
+  namespace: demo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ovc-disk-csi-driver-replication-controller
+      app: demo
   template:
     metadata:
-      name: ovc-disk-csi-driver-replication-controller
+      name: demo
       labels:
-        app: ovc-disk-csi-driver-replication-controller
+        app: demo
     spec:
       containers:
-      - name: ovc-disk-csi-driver-replication-controller
+      - name: demo
         image: centos
         command: ["/bin/sh"]
         args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]

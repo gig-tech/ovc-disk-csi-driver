@@ -1,6 +1,0 @@
-# apiVersion: snapshot.storage.k8s.io/v1alpha1
-# kind: VolumeSnapshotClass
-# metadata:
-#   name: ovc-disk-csi-driver-snapclass
-#   namespace: ovc-disk-csi-demo
-# snapshotter: ovc-disk-csi-driver
