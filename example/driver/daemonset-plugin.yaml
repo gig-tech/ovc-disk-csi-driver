@@ -16,45 +16,37 @@ spec:
       hostNetwork: true
       containers:
         - name: driver-registrar
-          image: quay.io/k8scsi/driver-registrar:v1.0-canary
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
           args:
-            - --v=5
-            - --csi-address=$(ADDRESS)
-            - --mode=node-register
-            - --driver-requires-attachment=true
-            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf $(ADDRESS) $(DRIVER_REG_SOCK_PATH)"]
           env:
             - name: ADDRESS
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
               value: /var/lib/kubelet/plugins/disk.ovc.csi.gig.tech/csi.sock
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-          imagePullPolicy: Always
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
+          imagePullPolicy: Always
         - name: ovc-plugin
-          image: gigtech/ovc-disk-csi-driver
+          image: chrisvdg/ovc-disk-csi-driver
+          imagePullPolicy: Always
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
-            - "--nodeid=$(KUBE_NODE_NAME)"
             - "--url=$(OVC_URL)"
-            - "--gid=$(OVC_GID)"
+            - "--grid_id=$(OVC_GRID_ID)"
             - "--account_id=$(OVC_ACCOUNT_ID)"
+            - "--verbose"
           env:
             - name: CSI_ENDPOINT
               value: unix:/csi/csi.sock
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
             - name: OVC_JWT
               valueFrom:
                 secretKeyRef:
@@ -65,11 +57,11 @@ spec:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
                   key: url
-            - name: OVC_GID
+            - name: OVC_GRID_ID
               valueFrom:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
-                  key: gid
+                  key: grid_id
             - name: OVC_ACCOUNT_ID
               valueFrom:
                 secretKeyRef:

@@ -32,7 +32,7 @@ spec:
       serviceAccountName: csi-attacher
       containers:
         - name: csi-attacher
-          image: quay.io/k8scsi/csi-attacher:v1.0.0
+          image: quay.io/k8scsi/csi-attacher:v1.0.1
           securityContext:
             privileged: true
             capabilities:
@@ -49,13 +49,14 @@ spec:
           - name: socket-dir
             mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: ovc-plugin
-          image: gigtech/ovc-disk-csi-driver
+          image: chrisvdg/ovc-disk-csi-driver
+          imagePullPolicy: Always
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
-            - "--nodeid=$(KUBE_NODE_NAME)"
             - "--url=$(OVC_URL)"
-            - "--gid=$(OVC_GID)"
+            - "--grid_id=$(OVC_GRID_ID)"
             - "--account_id=$(OVC_ACCOUNT_ID)"
+            - "--verbose"
           env:
             - name: CSI_ENDPOINT
               value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
@@ -74,11 +75,11 @@ spec:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
                   key: url
-            - name: OVC_GID
+            - name: OVC_GRID_ID
               valueFrom:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
-                  key: gid
+                  key: grid_id
             - name: OVC_ACCOUNT_ID
               valueFrom:
                 secretKeyRef:
