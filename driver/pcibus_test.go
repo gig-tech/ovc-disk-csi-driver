@@ -9,56 +9,56 @@ import (
 func TestCompPathBusSlot(t *testing.T) {
 	tt := []struct {
 		path string
-		bus  string
-		slot string
+		bus  int
+		slot int
 		pass bool
 	}{
 		{
 			path: "virtio-pci-0000:00:0a.0",
-			bus:  "0x00",
-			slot: "0x0a",
+			bus:  0,
+			slot: 10,
 			pass: true,
 		},
 		{
 			path: "virtio-pci-0000:ab:cd",
-			bus:  "0xab",
-			slot: "0xcd",
+			bus:  171,
+			slot: 205,
 			pass: true,
 		},
 		{
 			path: "virtio-pci-0000:00:0a.0",
-			bus:  "0x00",
-			slot: "0a",
+			bus:  0,
+			slot: 10,
 			pass: true,
 		},
 		{
 			path: "pci-0000:00:17.0-ata-1",
-			bus:  "00",
-			slot: "17",
+			bus:  0,
+			slot: 23,
 			pass: true,
 		},
 		{
 			path: "pci-0000:00:17",
-			bus:  "00",
-			slot: "17",
+			bus:  0,
+			slot: 23,
 			pass: true,
 		},
 		{
 			path: "virtio-pci-0000:00:0a.0",
-			bus:  "0x00",
-			slot: "0x10",
+			bus:  0,
+			slot: 16,
 			pass: false,
 		},
 		{
 			path: "foobar",
-			bus:  "foo",
-			slot: "bar",
+			bus:  0,
+			slot: 1,
 			pass: false,
 		},
 		{
 			path: "foo:bar",
-			bus:  "foo",
-			slot: "bar",
+			bus:  0,
+			slot: 1,
 			pass: false,
 		},
 	}
@@ -67,9 +67,9 @@ func TestCompPathBusSlot(t *testing.T) {
 		result := compPathBusSlot(tc.path, tc.bus, tc.slot)
 
 		if tc.pass {
-			require.True(t, result, "Expected path %s with bus %s and slot %s to pass", tc.path, tc.bus, tc.slot)
+			require.True(t, result, "Expected path %s with bus %d and slot %d to pass", tc.path, tc.bus, tc.slot)
 		} else {
-			require.False(t, result, "Expected path %s with bus %s and slot %s to fail", tc.path, tc.bus, tc.slot)
+			require.False(t, result, "Expected path %s with bus %d and slot %d to fail", tc.path, tc.bus, tc.slot)
 		}
 	}
 }
@@ -99,7 +99,7 @@ func TestIsPart(t *testing.T) {
 			pass:     false,
 		},
 		{
-			filename: "foobat-01part01",
+			filename: "foobar-01part01",
 			pass:     true,
 		},
 		{

@@ -15,7 +15,7 @@ const (
 	disksByPathDir = "/dev/disk/by-path/"
 )
 
-func getDevicePath(log *logrus.Entry, pciBus, pciSlot string) (string, error) {
+func getDevicePath(log *logrus.Entry, pciBus, pciSlot int) (string, error) {
 	fileInfo, err := ioutil.ReadDir(disksByPathDir)
 	if err != nil {
 		return "", err
@@ -31,7 +31,7 @@ func getDevicePath(log *logrus.Entry, pciBus, pciSlot string) (string, error) {
 			continue
 		}
 
-		log.Debugf("%s matched bus %s slot %s", file.Name(), pciBus, pciSlot)
+		log.Debugf("%s matched bus %d slot %d", file.Name(), pciBus, pciSlot)
 
 		resolvedLink, err := filepath.EvalSymlinks(fmt.Sprintf("%s/%s", disksByPathDir, file.Name()))
 		if err != nil {
@@ -43,17 +43,13 @@ func getDevicePath(log *logrus.Entry, pciBus, pciSlot string) (string, error) {
 		return resolvedLink, nil
 	}
 
-	return "", fmt.Errorf("Device not found in pci bus %s, slot %s", pciBus, pciSlot)
+	return "", fmt.Errorf("Device not found in pci bus %d, slot %d", pciBus, pciSlot)
 }
 
 // compPathBusSlot returns true if the bus and slot match in the linuxPCIBusName
-func compPathBusSlot(linuxPCIBusName, bus, slot string) bool {
-	if strings.HasPrefix(bus, "0x") {
-		bus = bus[2:]
-	}
-	if strings.HasPrefix(slot, "0x") {
-		slot = slot[2:]
-	}
+func compPathBusSlot(linuxPCIBusName string, bus int, slot int) bool {
+	busHexStr := parseHexStr(bus)
+	slotHexStr := parseHexStr(slot)
 
 	parts := strings.Split(linuxPCIBusName, ":")
 	// invalid path
@@ -63,11 +59,20 @@ func compPathBusSlot(linuxPCIBusName, bus, slot string) bool {
 	pathBus := parts[1]
 	pathSlot := strings.Split(parts[2], ".")[0]
 
-	if pathBus == bus && pathSlot == slot {
+	if pathBus == busHexStr && pathSlot == slotHexStr {
 		return true
 	}
 
 	return false
+}
+
+func parseHexStr(nr int) string {
+	hexStr := fmt.Sprintf("%x", nr)
+	if len(hexStr) == 1 {
+		hexStr = fmt.Sprintf("0%s", hexStr)
+	}
+
+	return hexStr
 }
 
 // isPart returns true if filename is a partition
