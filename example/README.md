@@ -9,7 +9,7 @@
 
 ## Setup kubernetes cluster on OpenvCloud
 
-- Follow demo repo for kubespray on OpenvCloud [here on the demo-terraform-ansible-kubespray repo](https://github.com/gig-tech/demo-terraform-ansible-kubespray/commit/76a146edc1af49907759661dce288570def4e6dc).
+- Follow demo repo for kubespray on OpenvCloud [here on the demo-terraform-ansible-kubespray repo](https://github.com/gig-tech/demo-terraform-ansible-kubespray/tree/v0.0.1).
     - Make sure you have your ssh key loaded configured in demo
 
 - SSH into mgmt VM and pass loaded keys: `ssh ansible@<public-ip-of-the-cloudspace> -p 2222 -A`
