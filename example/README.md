@@ -35,7 +35,7 @@ From the example folder of this repo on the host where you can control the kuber
 
     Then create the secret:
     ```
-    kubectl create secret generic ovc-disk-csi-driver-secret --from-file=secret
+    kubectl create secret --namespace ovc-disk-csi generic ovc-disk-csi-driver-secret --from-file=secret
     ```
 - Apply driver configs: `kubectl apply -f driver`
 - Apply app configs: `kubectl apply -f app`
