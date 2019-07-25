@@ -56,11 +56,11 @@ var (
 // NewDriver creates a new driver
 func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mount.SafeFormatAndMount, ovcJWT string, verbose bool) (*Driver, error) {
 	c := &ovc.Config{
-		Hostname: url,
-		JWT:      ovcJWT,
-		Verbose:  verbose,
+		URL:     url,
+		JWT:     ovcJWT,
+		Verbose: verbose,
 	}
-	client, err := ovc.NewClient(c, url)
+	client, err := ovc.NewClient(c)
 	if err != nil {
 		return nil, err
 	}

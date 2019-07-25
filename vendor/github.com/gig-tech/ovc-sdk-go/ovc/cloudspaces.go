@@ -22,6 +22,9 @@ type CloudSpaceConfig struct {
 	MaxNumPublicIP         int     `json:"maxNumPublicIP,omitempty"`
 	AllowedVMSizes         []int   `json:"allowedVMSizes,omitempty"`
 	PrivateNetwork         string  `json:"privatenetwork"`
+	Mode                   string  `json:"mode"`
+	Type                   string  `json:"type"`
+	ExternalnetworkID      string  `json:"externalnetworkId"`
 }
 
 // ResourceLimits contains all information related to resource limits
@@ -56,6 +59,8 @@ type CloudSpace struct {
 	Location        string `json:"location"`
 	Publicipaddress string `json:"publicipaddress"`
 	PrivateNetwork  string `json:"privatenetwork"`
+	Type            string `json:"type"`
+	Mode            string `json:"mode"`
 }
 
 // CloudSpaceList returns a list of CloudSpaces
@@ -83,6 +88,8 @@ type CloudSpaceList []struct {
 	} `json:"accountAcl"`
 	GridID          int    `json:"gid"`
 	Location        string `json:"location"`
+	Mode            string `json:"mode"`
+	Type            string `json:"type"`
 	Publicipaddress string `json:"publicipaddress"`
 	AccountName     string `json:"accountName"`
 	ID              int    `json:"id"`
@@ -104,6 +111,7 @@ type CloudSpaceService interface {
 	Create(*CloudSpaceConfig) (string, error)
 	Update(*CloudSpaceConfig) error
 	Delete(*CloudSpaceDeleteConfig) error
+	SetDefaultGateway(int, string) error
 }
 
 // CloudSpaceServiceOp handles communication with the cloudspace related methods of the
@@ -223,6 +231,25 @@ func (s *CloudSpaceServiceOp) Update(cloudSpaceConfig *CloudSpaceConfig) error {
 		return err
 	}
 	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/update", bytes.NewBuffer(cloudSpaceJSON))
+	if err != nil {
+		return err
+	}
+	_, err = s.client.Do(req)
+
+	return err
+}
+
+// SetDefaultGateway sets default gateway of the cloudspace to the given IP address
+func (s *CloudSpaceServiceOp) SetDefaultGateway(cloudspaceID int, gateway string) error {
+	csMap := make(map[string]interface{})
+	csMap["cloudspaceId"] = cloudspaceID
+	csMap["gateway"] = gateway
+
+	csMapJSON, err := json.Marshal(csMap)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/setDefaultGateway", bytes.NewBuffer(csMapJSON))
 	if err != nil {
 		return err
 	}

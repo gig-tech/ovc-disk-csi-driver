@@ -18,7 +18,7 @@ var (
 
 // Config used to connect to the API
 type Config struct {
-	Hostname     string
+	URL          string
 	ClientID     string
 	ClientSecret string
 	JWT          string
@@ -39,19 +39,21 @@ type Client struct {
 
 	logger *logrus.Entry
 
-	Machines     MachineService
-	CloudSpaces  CloudSpaceService
-	Accounts     AccountService
-	Disks        DiskService
-	Portforwards ForwardingService
-	Templates    TemplateService
-	Sizes        SizesService
-	Images       ImageService
-	Ipsec        IpsecService
+	Machines         MachineService
+	CloudSpaces      CloudSpaceService
+	Accounts         AccountService
+	Disks            DiskService
+	Portforwards     ForwardingService
+	Templates        TemplateService
+	Sizes            SizesService
+	Images           ImageService
+	Ipsec            IpsecService
+	ExternalNetworks ExternalNetworkService
+	Locations        LocationService
 }
 
 // NewClient returns a OpenVCloud API Client
-func NewClient(c *Config, url string) (*Client, error) {
+func NewClient(c *Config) (*Client, error) {
 	if c.ClientID != "" && c.ClientSecret != "" && c.JWT != "" {
 		return nil, fmt.Errorf("ClientID, ClientSecret and JWT are provided, please only set ClientID and ClientSecret or JWT")
 	}
@@ -93,7 +95,7 @@ func NewClient(c *Config, url string) (*Client, error) {
 		return nil, err
 	}
 
-	client.ServerURL = url + "/restmachine"
+	client.ServerURL = c.URL + "/restmachine"
 	client.JWT = jwt
 	client.Access = username.(string) + "@itsyouonline"
 
@@ -108,6 +110,8 @@ func NewClient(c *Config, url string) (*Client, error) {
 	client.Sizes = &SizesServiceOp{client: client}
 	client.Images = &ImageServiceOp{client: client}
 	client.Ipsec = &IpsecServiceOp{client: client}
+	client.ExternalNetworks = &ExternalNetworkServiceOp{client: client}
+	client.Locations = &LocationServiceOp{client: client}
 
 	return client, nil
 }

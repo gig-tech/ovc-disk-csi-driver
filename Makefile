@@ -42,3 +42,9 @@ image:
 .PHONY: push
 push:
 	docker push $(IMAGE):$(VERSION)
+
+.PHONY: update-sdk
+update-sdk: 
+	GO111MODULE=on go get -u github.com/gig-tech/ovc-sdk-go@$(SDK_BRANCH)
+	GO111MODULE=on go mod vendor
+	GO111MODULE=on go mod tidy
