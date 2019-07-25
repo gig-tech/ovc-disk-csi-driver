@@ -119,6 +119,8 @@ type MachineService interface {
 	DeleteByID(int) error
 	Template(int, string) error
 	Shutdown(int) error
+	AddExternalIP(int, int) error
+	DeleteExternalIP(int, int, string) error
 }
 
 // MachineServiceOp handles communication with the machine related methods of the
@@ -332,6 +334,49 @@ func (s *MachineServiceOp) Shutdown(machineID int) error {
 		return err
 	}
 	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/machines/stop", bytes.NewBuffer(machineJSON))
+	if err != nil {
+		return err
+	}
+	_, err = s.client.Do(req)
+
+	return err
+}
+
+// AddExternalIP adds external IP
+func (s *MachineServiceOp) AddExternalIP(machineID int, externalNetworkID int) error {
+	machineMap := make(map[string]interface{})
+	machineMap["machineId"] = machineID
+	if externalNetworkID != 0 {
+		machineMap["externalNetworkId"] = externalNetworkID
+	}
+	machineJSON, err := json.Marshal(machineMap)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/machines/attachExternalNetwork", bytes.NewBuffer(machineJSON))
+	if err != nil {
+		return err
+	}
+	_, err = s.client.Do(req)
+
+	return err
+}
+
+// DeleteExternalIP removes external IP
+func (s *MachineServiceOp) DeleteExternalIP(machineID int, externalNetworkID int, externalNetworkIP string) error {
+	machineMap := make(map[string]interface{})
+	machineMap["machineId"] = machineID
+	if externalNetworkID > 0 {
+		machineMap["externalNetworkId"] = externalNetworkID
+		if len(externalNetworkIP) > 0 {
+			machineMap["externalnetworkip"] = externalNetworkIP
+		}
+	}
+	machineJSON, err := json.Marshal(machineMap)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/machines/detachExternalNetwork", bytes.NewBuffer(machineJSON))
 	if err != nil {
 		return err
 	}
