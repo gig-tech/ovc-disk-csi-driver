@@ -54,7 +54,7 @@ var (
 )
 
 // NewDriver creates a new driver
-func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mount.SafeFormatAndMount, ovcJWT string, verbose bool) (*Driver, error) {
+func NewDriver(url, endpoint, nodeID string, accountID int, mounter *mount.SafeFormatAndMount, ovcJWT string, verbose bool) (*Driver, error) {
 	c := &ovc.Config{
 		URL:     url,
 		JWT:     ovcJWT,
@@ -64,6 +64,13 @@ func NewDriver(url, endpoint, nodeID string, accountID, gridID int, mounter *mou
 	if err != nil {
 		return nil, err
 	}
+
+	// Fetch grid ID
+	locations, err := client.Locations.List()
+	if err != nil {
+		return nil, err
+	}
+	gridID := (*locations)[0].GridID
 
 	if mounter == nil {
 		mounter = newSafeMounter()

@@ -27,7 +27,6 @@ import (
 func main() {
 	var endpoint = flag.String("endpoint", "unix://tmp/csi.sock", "CSI Endpoint")
 	var url = flag.String("url", "", "OVC URL")
-	var gridID = flag.Int("grid_id", 0, "OVC Grid ID")
 	var accountID = flag.Int("account_id", 0, "Account ID")
 	var verbose = flag.Bool("verbose", false, "Set verbose output")
 	flag.Parse()
@@ -36,7 +35,7 @@ func main() {
 
 	print(verbose)
 
-	drv, err := driver.NewDriver(*url, *endpoint, "", *accountID, *gridID, nil, ovcJWT, *verbose)
+	drv, err := driver.NewDriver(*url, *endpoint, "", *accountID, nil, ovcJWT, *verbose)
 	if err != nil {
 		log.Fatalln(err)
 	}
