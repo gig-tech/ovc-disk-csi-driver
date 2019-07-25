@@ -41,8 +41,7 @@ spec:
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--url=$(OVC_URL)"
-            - "--grid_id=$(OVC_GRID_ID)"
-            - "--account_id=$(OVC_ACCOUNT_ID)"
+            - "--account=$(OVC_ACCOUNT)"
             - "--verbose"
           env:
             - name: CSI_ENDPOINT
@@ -57,16 +56,11 @@ spec:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
                   key: url
-            - name: OVC_GRID_ID
+            - name: OVC_ACCOUNT
               valueFrom:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
-                  key: grid_id
-            - name: OVC_ACCOUNT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: ovc-disk-csi-driver-secret
-                  key: account_id
+                  key: account
           imagePullPolicy: Always
           securityContext:
             privileged: true

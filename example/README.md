@@ -27,9 +27,8 @@ From the example folder of this repo on the host where you can control the kuber
 - Apply namespaces: `kubectl apply -f namespaces`
 - Apply secrets by first filling in the data according the names of the files in `secret`. Make sure the file has no appending new line.  
     ```
-    echo -n "my_account_id"  > secret/account_id
+    echo -n "my_g8_account_name"  > secret/account
     echo -n "my_jwt_token"  > secret/client_jwt
-    echo -n "my_g8's_grid_id"  > secret/grid_id
     echo -n "my_g8's_url"  > secret/url
     ```
 
