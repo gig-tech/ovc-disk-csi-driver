@@ -49,7 +49,7 @@ spec:
           - name: socket-dir
             mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: ovc-plugin
-          image: chrisvdg/ovc-disk-csi-driver
+          image: gigtech/ovc-disk-csi-driver
           imagePullPolicy: Always
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
