@@ -1,0 +1,86 @@
+---
+- hosts: kube-master
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Fetch k8s config file
+      fetch:
+        src: ~/.kube/config
+        dest: cluster_config
+        flat: yes
+
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  vars:
+    namespace: "{{ lookup('env','TF_VAR_cluster_name') }}"
+    server_url: "{{ lookup('env','TF_VAR_server_url') }}"
+    mnt: "{{ namespace }}-terraform-kube-mgt"
+    cluster_url: "https://{{hostvars[mnt]['ansible_host'] }}:6443"
+    account: "{{ lookup('env','TF_VAR_account') }}"
+    client_jwt: "{{ lookup('env','TF_VAR_client_jwt') }}"
+  environment:
+    KUBECONFIG: cluster_config
+  tasks:
+    - name: Load k8s config
+      shell: 
+        cmd: | 
+      
+          echo $KUBECONFIG  > TMP_FILENAME
+          cat  $KUBECONFIG > TMP_CONFIG
+          kubectl config set clusters.cluster.local.insecure-skip-tls-verify true
+          kubectl config unset clusters.cluster.local.certificate-authority-data
+          kubectl config set clusters.cluster.local.server {{ cluster_url }}
+    - name: Create namespaces and secret dir
+      file:
+        path: namespaces
+        state: directory
+      file:
+        path: secret
+        state: directory
+    - name: Create namespaces config and secret
+      template:
+        src: templates/namespaces.j2
+        dest: namespaces.yaml
+    - template:
+        src: templates/url.j2
+        dest: secret/url
+    - template:
+        src: templates/account.j2
+        dest: secret/account
+    - template:
+        src: templates/client_jwt.j2
+        dest: secret/client_jwt
+    - name: Apply namespaces
+      shell: |
+        kubectl apply -f namespaces.yaml
+      register: ns_creation
+    - name: Create secret
+      shell: |
+        kubectl delete secret ovc-disk-csi-driver-secret -n ovc-disk-csi
+        kubectl create secret generic ovc-disk-csi-driver-secret --from-file secret -n ovc-disk-csi
+      register: secret_creation
+    - debug: var=secret_creation.stdout
+    - name: Apply driver config
+      shell: |
+        # kubectl delete -f ovc-disk-csi-driver/example/driver
+        kubectl apply -f ovc-disk-csi-driver/example/driver
+      register: driver
+    - debug: var=driver.stdout
+
+    - name: Apply app config
+      shell:
+        # kubectl delete -f ovc-disk-csi-driver/example/app
+        kubectl apply -f ovc-disk-csi-driver/example/app
+      register: app
+    - debug: var=app.stdout
+
+    - name: Check if pod is running
+      shell: |
+        sleep 20
+        kubectl get po -n demo -o wide
+      register: po
+    - debug: var=po.stdout
+
+    
