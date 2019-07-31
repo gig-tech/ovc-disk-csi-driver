@@ -75,7 +75,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	// get volume first, if it's created do no thing
 	volumeName := req.Name
-	volumes, err := d.client.Disks.List(d.accountID)
+	volumes, err := d.g8s[d.nodeG8].client.Disks.List(d.g8s[d.nodeG8].accountID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -97,8 +97,8 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Name:        volumeName,
 		Description: createdByGig,
 		Size:        int(size / GiB),
-		AccountID:   d.accountID,
-		GridID:      d.gridID,
+		AccountID:   d.g8s[d.nodeG8].accountID,
+		GridID:      d.g8s[d.nodeG8].gridID,
 		Type:        "D",
 	}
 
@@ -111,7 +111,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 	ll.Debug("Create volume called")
 
 	ll.WithField("volume_req", diskConfig).Debug("Creating volume")
-	volID, err := d.client.Disks.Create(diskConfig)
+	volID, err := d.g8s[d.nodeG8].client.Disks.Create(diskConfig)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -151,7 +151,7 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 		Permanently: true,
 	}
 
-	err = d.client.Disks.Delete(deleteConfig)
+	err = d.g8s[d.nodeG8].client.Disks.Delete(deleteConfig)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -187,12 +187,12 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 	logger.Debug("Controller publish volume called")
 
 	// check if volume exist before trying to attach it
-	vol, err := d.client.Disks.Get(req.VolumeId)
+	vol, err := d.g8s[d.nodeG8].client.Disks.Get(req.VolumeId)
 	if err != nil {
 		return nil, err
 	}
 
-	machine, err := d.client.Machines.Get(req.NodeId)
+	machine, err := d.g8s[d.nodeG8].client.Machines.Get(req.NodeId)
 	if err != nil {
 		return nil, err
 	}
@@ -212,20 +212,20 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		MachineID: machineID,
 		DiskID:    diskID,
 	}
-	err = d.client.Disks.Attach(diskConfig)
+	err = d.g8s[d.nodeG8].client.Disks.Attach(diskConfig)
 	if err != nil {
 		if nodeHasDisk(machine, diskID) {
 			logger.Debug("Disk was already attached to machine")
 			return controllerPublishVolumeSuccessResponse(vol.Name, req.NodeId, vol.ID)
 		}
 
-		machines, err := d.client.Machines.List(machine.CloudspaceID)
+		machines, err := d.g8s[d.nodeG8].client.Machines.List(machine.CloudspaceID)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, m := range *machines {
-			machine, err := d.client.Machines.Get(strconv.Itoa(m.ID))
+			machine, err := d.g8s[d.nodeG8].client.Machines.Get(strconv.Itoa(m.ID))
 			if err != nil {
 				return nil, err
 			}
@@ -235,12 +235,12 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 					MachineID: machineID,
 					DiskID:    diskID,
 				}
-				d.client.Disks.Detach(detachConfig)
+				d.g8s[d.nodeG8].client.Disks.Detach(detachConfig)
 				break
 			}
 		}
 
-		err = d.client.Disks.Attach(diskConfig)
+		err = d.g8s[d.nodeG8].client.Disks.Attach(diskConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -301,7 +301,7 @@ func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.Control
 		DiskID:    volID,
 	}
 
-	err = d.client.Disks.Detach(diskConfig)
+	err = d.g8s[d.nodeG8].client.Disks.Detach(diskConfig)
 	if err != nil {
 		ll.Debugf("Failed to detach volume %s from node %s: %q", req.VolumeId, req.NodeId, err)
 		return nil, err
@@ -330,7 +330,7 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 	})
 	ll.Debug("Validate volume capabilities called")
 
-	if _, err := d.client.Disks.Get(req.VolumeId); err != nil {
+	if _, err := d.g8s[d.nodeG8].client.Disks.Get(req.VolumeId); err != nil {
 		return nil, status.Error(codes.NotFound, "Volume not found")
 	}
 
@@ -353,12 +353,12 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
 	var err error
 	ll := d.log.WithFields(logrus.Fields{
-		"account_id": d.accountID,
+		"account_id": d.g8s[d.nodeG8].accountID,
 		"method":     "list_volumes",
 	})
 	ll.Debug("List volumes called")
 
-	disks, err := d.client.Disks.List(d.accountID)
+	disks, err := d.g8s[d.nodeG8].client.Disks.List(d.g8s[d.nodeG8].accountID)
 	if err != nil {
 		return nil, err
 	}

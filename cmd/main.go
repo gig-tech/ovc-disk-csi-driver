@@ -18,28 +18,47 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
-	"os"
 
+	"github.com/ghodss/yaml"
+	"github.com/gig-tech/ovc-disk-csi-driver/config"
 	"github.com/gig-tech/ovc-disk-csi-driver/driver"
 )
 
 func main() {
-	var endpoint = flag.String("endpoint", "unix://tmp/csi.sock", "CSI Endpoint")
-	var url = flag.String("url", "", "OVC URL")
-	var account = flag.String("account", "", "Account name")
+	var configFile = flag.String("config", "./config.yaml", "Config YAML file")
 	var verbose = flag.Bool("verbose", false, "Set verbose output")
 	flag.Parse()
 
-	ovcJWT := os.Getenv("OVC_JWT")
+	cliConfig, err := readConfig(*configFile)
+	if err != nil {
+		log.Fatalf("Sonething went wrong reading the config file: %s", err)
+	}
 
-	print(verbose)
+	driverConfig := cliConfig.GetDriverConfig(*verbose)
 
-	drv, err := driver.NewDriver(*url, *endpoint, "", *account, nil, ovcJWT, *verbose)
+	drv, err := driver.NewDriver(driverConfig, nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	if err := drv.Run(); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func readConfig(path string) (*config.CLI, error) {
+	yamlFile, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &config.CLI{}
+	err = yaml.Unmarshal(yamlFile, c)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }

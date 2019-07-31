@@ -2,6 +2,7 @@ module github.com/gig-tech/ovc-disk-csi-driver
 
 require (
 	github.com/container-storage-interface/spec v1.1.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/gig-tech/ovc-sdk-go v1.4.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.4.2

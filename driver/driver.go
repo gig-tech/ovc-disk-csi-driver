@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/gig-tech/ovc-disk-csi-driver/config"
 	"github.com/gig-tech/ovc-sdk-go/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -34,11 +35,10 @@ import (
 
 // Driver struct contains all relevant Driver information
 type Driver struct {
-	endpoint  string
-	client    *ovc.Client
-	accountID int
-	gridID    int
-	nodeID    string
+	endpoint string
+	nodeID   string
+	g8s      map[string]g8
+	nodeG8   string // name of g8 this instance is running on
 
 	volumeCaps     []csi.VolumeCapability_AccessMode
 	controllerCaps []csi.ControllerServiceCapability_RPC_Type
@@ -49,63 +49,55 @@ type Driver struct {
 	mounter *mount.SafeFormatAndMount
 }
 
+type g8 struct {
+	client    *ovc.Client
+	accountID int
+	gridID    int
+}
+
 var (
 	version string
 )
 
 // NewDriver creates a new driver
-func NewDriver(url, endpoint, nodeID, account string, mounter *mount.SafeFormatAndMount, ovcJWT string, verbose bool) (*Driver, error) {
-	c := &ovc.Config{
-		URL:     url,
-		JWT:     ovcJWT,
-		Verbose: verbose,
-	}
-	client, err := ovc.NewClient(c)
-	if err != nil {
-		return nil, err
+func NewDriver(driverCfg *config.Driver, mounter *mount.SafeFormatAndMount) (*Driver, error) {
+	log := logrus.New()
+	if driverCfg.Verbose {
+		log.SetLevel(logrus.DebugLevel)
+	} else {
+		log.SetLevel(logrus.InfoLevel)
 	}
 
-	// Fetch grid ID
-	locations, err := client.Locations.List()
+	g8Configs, err := generateG8s(driverCfg)
 	if err != nil {
-		return nil, err
-	}
-	gridID := (*locations)[0].GridID
-
-	accountID, err := client.Accounts.GetIDByName(account)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed generating g8 configs: %s", err)
 	}
 
 	if mounter == nil {
 		mounter = newSafeMounter()
 	}
 
-	if nodeID == "" {
-		nodeID, err = getNodeID(client)
-		if err != nil {
-			return nil, fmt.Errorf("something went wrong fetching the node ID %s", err)
-		}
+	nodeG8, err := currentG8(g8Configs, log)
+	if err != nil {
+		return nil, fmt.Errorf("failed fetching node's g8: %s", err)
 	}
 
-	log := logrus.New()
-	if verbose {
-		log.SetLevel(logrus.DebugLevel)
-	} else {
-		log.SetLevel(logrus.InfoLevel)
+	nodeID, err := getNodeID(g8Configs[nodeG8].client)
+	if err != nil {
+		return nil, fmt.Errorf("failed fetching the node ID %s", err)
 	}
+
 	logEntry := log.WithFields(logrus.Fields{
 		"node_id": nodeID,
 	})
 
 	return &Driver{
-		gridID:    gridID,
-		client:    client,
-		endpoint:  endpoint,
-		accountID: accountID,
-		nodeID:    nodeID,
-		mounter:   mounter,
-		log:       logEntry,
+		endpoint: driverCfg.Endpoint,
+		g8s:      g8Configs,
+		nodeG8:   nodeG8,
+		nodeID:   nodeID,
+		mounter:  mounter,
+		log:      logEntry,
 		volumeCaps: []csi.VolumeCapability_AccessMode{
 			{
 				Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
@@ -119,6 +111,61 @@ func NewDriver(url, endpoint, nodeID, account string, mounter *mount.SafeFormatA
 			csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
 		},
 	}, nil
+}
+
+// generateG8s generates g8 clients
+func generateG8s(c *config.Driver) (map[string]g8, error) {
+	g8s := make(map[string]g8)
+	for _, g8Config := range c.G8s {
+		clientC := &ovc.Config{
+			URL:     g8Config.URL,
+			JWT:     g8Config.JWT,
+			Verbose: c.Verbose,
+		}
+		client, err := ovc.NewClient(clientC)
+		if err != nil {
+			return nil, fmt.Errorf("failed generating client for %s: %s", g8Config.Name, err)
+		}
+
+		locations, err := client.Locations.List()
+		if err != nil {
+			return nil, fmt.Errorf("failed listing locations for %s: %s", g8Config.Name, err)
+		}
+		gridID := (*locations)[0].GridID
+
+		accountID, err := client.Accounts.GetIDByName(g8Config.Account)
+		if err != nil {
+			return nil, fmt.Errorf("failed getting account ID for %s: %s", g8Config.Name, err)
+		}
+
+		g8 := g8{
+			client:    client,
+			accountID: accountID,
+			gridID:    gridID,
+		}
+
+		g8s[g8Config.Name] = g8
+	}
+
+	return g8s, nil
+}
+
+func currentG8(g8s map[string]g8, log *logrus.Logger) (string, error) {
+	nodeUUID, err := getNodeUUID()
+	if err != nil {
+		return "", err
+	}
+
+	for g8, g8Config := range g8s {
+		log.Debugf("Looking for node on G8 %s", g8)
+
+		_, err = g8Config.client.Machines.GetByReferenceID(nodeUUID)
+		if err == nil {
+			return g8, nil
+		}
+	}
+
+	return "", fmt.Errorf("G8 not found for machine %s", nodeUUID)
 }
 
 // Run runs the driver

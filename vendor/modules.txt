@@ -4,6 +4,8 @@ github.com/container-storage-interface/spec/lib/go/csi
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
+# github.com/ghodss/yaml v1.0.0
+github.com/ghodss/yaml
 # github.com/gig-tech/ovc-sdk-go v1.4.0
 github.com/gig-tech/ovc-sdk-go/ovc
 # github.com/golang/protobuf v1.2.0
@@ -73,6 +75,8 @@ google.golang.org/grpc/balancer/base
 google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/internal/syscall
+# gopkg.in/yaml.v2 v2.2.1
+gopkg.in/yaml.v2
 # k8s.io/apimachinery v0.0.0-20190424052434-11f1676e3da4
 k8s.io/apimachinery/pkg/util/sets
 # k8s.io/klog v0.3.0

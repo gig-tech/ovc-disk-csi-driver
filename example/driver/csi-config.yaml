@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csi-config
+  namespace: ovc-disk-csi
+data: 
+  attacher_provisioner.yaml: |
+    endpoint: "unix:///var/lib/csi/sockets/pluginproxy/csi.sock"
+    g8s:
+    - name: ch2
+      url: "https://ch-lug-dc01-002.gig.tech"
+      account: "chrisvdg"
+      jwtEnv: "OVC_JWT"
+  deamonset.yaml: |
+    endpoint: "unix:/csi/csi.sock"
+    g8s:
+    - name: ch2
+      url: "https://ch-lug-dc01-002.gig.tech"
+      account: "chrisvdg"
+      jwtEnv: "OVC_JWT"

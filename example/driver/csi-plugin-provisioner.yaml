@@ -35,37 +35,17 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy/
 
         - name: ovc-plugin
-          image: gigtech/ovc-disk-csi-driver
+          image: chrisvdg/ovc-disk-csi-driver
           imagePullPolicy: Always
           args:
-            - "--endpoint=$(CSI_ENDPOINT)"
-            - "--url=$(OVC_URL)"
-            - "--account=$(OVC_ACCOUNT)"
+            - "--config=csi-config/attacher_provisioner.yaml"
             - "--verbose"
           env:
-            - name: CSI_ENDPOINT
-              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
             - name: OVC_JWT
               valueFrom:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
                   key: client_jwt
-            - name: OVC_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ovc-disk-csi-driver-secret
-                  key: url
-
-            - name: OVC_ACCOUNT
-              valueFrom:
-                secretKeyRef:
-                  name: ovc-disk-csi-driver-secret
-                  key: account
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -74,6 +54,11 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+            - name: csi-config
+              mountPath: csi-config
       volumes:
         - name: socket-dir
           emptyDir: {}
+        - name: csi-config
+          configMap: 
+            name: csi-config

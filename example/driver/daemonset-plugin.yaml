@@ -36,12 +36,10 @@ spec:
               mountPath: /registration
           imagePullPolicy: Always
         - name: ovc-plugin
-          image: gigtech/ovc-disk-csi-driver
+          image: chrisvdg/ovc-disk-csi-driver
           imagePullPolicy: Always
           args:
-            - "--endpoint=$(CSI_ENDPOINT)"
-            - "--url=$(OVC_URL)"
-            - "--account=$(OVC_ACCOUNT)"
+            - "--config=csi-config/deamonset.yaml"
             - "--verbose"
           env:
             - name: CSI_ENDPOINT
@@ -51,16 +49,6 @@ spec:
                 secretKeyRef:
                   name: ovc-disk-csi-driver-secret
                   key: client_jwt
-            - name: OVC_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ovc-disk-csi-driver-secret
-                  key: url
-            - name: OVC_ACCOUNT
-              valueFrom:
-                secretKeyRef:
-                  name: ovc-disk-csi-driver-secret
-                  key: account
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -72,6 +60,8 @@ spec:
               mountPath: /csi
             - name: device-dir
               mountPath: /dev
+            - name: csi-config
+              mountPath: csi-config
       volumes:
         - name: kubelet-dir
           hostPath:
@@ -89,3 +79,6 @@ spec:
           hostPath:
             path: /dev
             type: Directory
+        - name: csi-config
+          configMap: 
+            name: csi-config

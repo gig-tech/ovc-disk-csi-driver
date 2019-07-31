@@ -58,7 +58,7 @@ func (d *Driver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRe
 		return nil, status.Error(codes.InvalidArgument, "Volume capability not supported")
 	}
 
-	diskInfo, err := d.client.Disks.Get(volumeID)
+	diskInfo, err := d.g8s[d.nodeG8].client.Disks.Get(volumeID)
 	if err != nil {
 		return nil, err
 	}
