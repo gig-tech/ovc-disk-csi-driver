@@ -1,0 +1,91 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  namespace: ovc-disk-csi
+  name: ovc-disk-csi-driver-driver
+spec:
+  selector:
+    matchLabels:
+      app: ovc-disk-csi-driver-driver
+  template:
+    metadata:
+      labels:
+        app: ovc-disk-csi-driver-driver
+    spec:
+      serviceAccountName: csi-driver-registrar
+      hostNetwork: true
+      containers:
+        - name: driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf $(ADDRESS) $(DRIVER_REG_SOCK_PATH)"]
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/disk.ovc.csi.gig.tech/csi.sock
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+          imagePullPolicy: Always
+        - name: ovc-plugin
+          image: gigtech/ovc-disk-csi-driver
+          imagePullPolicy: Always
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--url=$(OVC_URL)"
+            - "--account=$(OVC_ACCOUNT)"
+            - "--verbose"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:/csi/csi.sock
+            - name: OVC_JWT
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: client_jwt
+            - name: OVC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: url
+            - name: OVC_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: ovc-disk-csi-driver-secret
+                  key: account
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: kubelet-dir
+              mountPath: /var/lib/kubelet
+              mountPropagation: "Bidirectional"
+            - name: plugin-dir
+              mountPath: /csi
+            - name: device-dir
+              mountPath: /dev
+      volumes:
+        - name: kubelet-dir
+          hostPath:
+            path: /var/lib/kubelet
+            type: Directory
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/disk.ovc.csi.gig.tech/
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: DirectoryOrCreate
+        - name: device-dir
+          hostPath:
+            path: /dev
+            type: Directory

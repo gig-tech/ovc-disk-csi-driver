@@ -1,0 +1,18 @@
+---
+# fetch kube config to take control over the cluster
+- hosts: kube-master
+  become: yes
+  gather_facts: no
+  vars:
+    config_path: "{{ lookup('env','k8s_config') }}"
+  tasks:
+    - name: Fetch k8s config file
+      fetch:
+        src: /root/.kube/config
+        dest: "{{ config_path }}"
+        flat: yes
+
+# install CSI driver
+- hosts: localhost
+  roles:
+    - {role: csi-driver}

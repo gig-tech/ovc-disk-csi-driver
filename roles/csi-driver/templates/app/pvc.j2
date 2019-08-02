@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim1
+  namespace: demo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: demo-sc
+  resources:
+    requests:
+      storage: {{ persistent_volume_size }}Gi
