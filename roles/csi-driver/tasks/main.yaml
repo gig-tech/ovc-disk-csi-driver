@@ -69,5 +69,3 @@
     KUBECONFIG: "{{ local_config_path }}"
   shell: |
     kubectl apply -f tmp/app
-
-    
