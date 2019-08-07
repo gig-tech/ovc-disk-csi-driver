@@ -1,0 +1,6 @@
+---
+local_config_path: k8s_config
+remote_config_path: /root/.kube/config
+management_group: mnt
+kubernetes_port: 6443
+persistent_volume_size: 10
