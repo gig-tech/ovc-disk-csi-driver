@@ -130,8 +130,9 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 // DeleteVolume deletes the given volume.
 func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	if req.VolumeId == "" {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID must be provided")
+	volID, err := newVolumeID(req.VolumeId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ll := d.log.WithFields(logrus.Fields{
@@ -140,13 +141,8 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 	})
 	ll.Debug("Delete volume called")
 
-	volID, err := strconv.Atoi(req.VolumeId)
-	if err != nil {
-		return nil, err
-	}
-
 	deleteConfig := &ovc.DiskDeleteConfig{
-		DiskID:      volID,
+		DiskID:      volID.diskID,
 		Detach:      true,
 		Permanently: true,
 	}

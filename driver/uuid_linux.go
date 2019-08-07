@@ -28,8 +28,8 @@ import (
 
 const uuidPath = "/sys/class/dmi/id/product_uuid"
 
-func getNodeID(client *ovc.Client) (string, error) {
-	nodeUUID, err := getNodeUUID()
+func getMachineID(client *ovc.Client) (string, error) {
+	nodeUUID, err := getMachineUUID()
 	if err != nil {
 		return "", err
 	}
@@ -41,8 +41,8 @@ func getNodeID(client *ovc.Client) (string, error) {
 	return strconv.Itoa(machine.ID), nil
 }
 
-// getNodeUUID returns the node product uuid in lowercase
-func getNodeUUID() (string, error) {
+// getMachineUUID returns the node product uuid in lowercase
+func getMachineUUID() (string, error) {
 	rawID, err := ioutil.ReadFile(uuidPath)
 	if err != nil {
 		return "", err

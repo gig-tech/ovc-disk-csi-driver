@@ -82,10 +82,13 @@ func NewDriver(driverCfg *config.Driver, mounter *mount.SafeFormatAndMount) (*Dr
 		return nil, fmt.Errorf("failed fetching node's g8: %s", err)
 	}
 
-	nodeID, err := getNodeID(g8Configs[nodeG8].client)
+	machineID, err := getMachineID(g8Configs[nodeG8].client)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching the node ID %s", err)
 	}
+
+	// TODO: fetch G8 name
+	nodeID := machineID
 
 	logEntry := log.WithFields(logrus.Fields{
 		"node_id": nodeID,
