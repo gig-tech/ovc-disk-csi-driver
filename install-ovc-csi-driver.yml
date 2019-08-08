@@ -14,5 +14,7 @@
 
 # install CSI driver
 - hosts: localhost
+  vars:
+    state: installed
   roles:
     - {role: csi-driver}
