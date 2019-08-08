@@ -17,3 +17,6 @@ cmd
 # IDE
 .vscode
 .idea/
+
+# kube config created by ansible playbook
+k8s_config
