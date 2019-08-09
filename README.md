@@ -4,7 +4,7 @@ This repo implements the CSI spec v1.1.0 for [GIG.tech's OpenvCloud](https://gig
 
 ## Ansible role CSI-Driver
 
-OVC CSI driver can be installed with Ansible role [csi-driver](roles/scr-driver)
+OVC CSI driver can be installed with Ansible role [csi-driver](roles/csi-driver)
 
 Role variables:
 
