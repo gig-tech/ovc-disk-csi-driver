@@ -17,6 +17,7 @@
     - namespaces
     - driver
     - app
+  when: state=="installed"
 
 - name: "Create secret files"
   template:
@@ -24,6 +25,7 @@
     dest: tmp/secret/{{ item | basename | regex_replace('\.j2','') }}
   with_fileglob:
     - roles/csi-driver/templates/secret/*.j2
+  when: state=="installed"
 
 - name: "Create namespace config files"
   template:
@@ -31,6 +33,7 @@
     dest: tmp/namespaces/{{ item | basename | regex_replace('\.j2','.yaml') }}
   with_fileglob:
     - roles/csi-driver/templates/namespaces/*.j2
+  when: state=="installed"
 
 - name: "Create driver config files"
   template:
@@ -38,6 +41,7 @@
     dest: tmp/driver/{{ item | basename | regex_replace('\.j2','.yaml') }}
   with_fileglob:
     - roles/csi-driver/templates/driver/*.j2
+  when: state=="installed"
 
 - name: "Create app config files"
   template:
@@ -45,27 +49,44 @@
     dest: tmp/app/{{ item | basename | regex_replace('\.j2','.yaml') }}
   with_fileglob:
     - roles/csi-driver/templates/app/*.j2
+  when: state=="installed"
 
 - name: Apply namespaces
   environment:
     KUBECONFIG: "{{ local_config_path }}"
   shell: |
     kubectl apply -f tmp/namespaces
+  when: state=="installed"
 
 - name: Create secret
   environment:
     KUBECONFIG: "{{ local_config_path }}"
   shell: |
     kubectl create secret generic ovc-disk-csi-driver-secret --from-file tmp/secret -n ovc-disk-csi --dry-run -o yaml | kubectl apply -f -
+  when: state=="installed"
 
 - name: Apply driver config
   environment:
     KUBECONFIG: "{{ local_config_path }}"
   shell: |
     kubectl apply -f tmp/driver
+  when: state=="installed"
 
 - name: Apply app config
   environment:
     KUBECONFIG: "{{ local_config_path }}"
   shell: |
     kubectl apply -f tmp/app
+  when: state=="installed"
+
+- debug: var=state
+- name: Uninstall CSI driver
+  environment:
+    KUBECONFIG: "{{ local_config_path }}"
+  shell: |
+    kubectl delete -f tmp/app || true
+    kubectl delete -f tmp/driver || true
+    kubectl delete secret ovc-disk-csi-driver-secret --namespace ovc-disk-csi || true
+    kubectl delete -f tmp/namespaces || true
+  when: state=="uninstalled"
+

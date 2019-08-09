@@ -23,3 +23,6 @@ config.env
 
 # kube config created by ansible playbook
 k8s_config
+
+# prevent tmp playbook configuration files from being pushed
+tmp/
