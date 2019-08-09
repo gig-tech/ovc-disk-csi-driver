@@ -89,4 +89,4 @@
     kubectl delete secret ovc-disk-csi-driver-secret --namespace ovc-disk-csi || true
     kubectl delete -f tmp/namespaces || true
   when: state=="uninstalled"
-  
+
