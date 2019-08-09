@@ -19,7 +19,7 @@ persistent_volume_size: <Size of persistent storage> # default to 10 Gi
 state: "<Role action>" # takes of of values: ["installed", "uninstalled"]. Default to "installed"
 ```
 
-Example playbook `install-csi-driver.yaml`:
+Sample playbook `install-csi-driver.yaml`:
 
 ``` yaml
 - hosts: localhost
@@ -31,8 +31,6 @@ Example playbook `install-csi-driver.yaml`:
   roles:
     - {role: csi-driver}
 ```
-
-Usage:
 
 To run the playbook on your `localhost` execute
 

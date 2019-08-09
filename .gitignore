@@ -17,3 +17,9 @@ cmd
 # IDE
 .vscode
 .idea/
+
+# prevent env files from being pushed
+*.env
+
+# prevent tmp playbook configuration files from being pushed
+tmp/
