@@ -2,10 +2,33 @@
 
 This repo implements the CSI spec v1.1.0 for [GIG.tech's OpenvCloud](https://gig.tech)
 
+## Ansible role CSI-Driver
+
+OVC CSI driver can be installed with Ansible role [csi-driver](roles/csi-driver)
+
+Sample playbook `install-csi-driver.yaml`:
+
+``` yaml
+- hosts: localhost
+  vars:
+    server_url: "" # G8's URL
+    account: "" # account name
+    client_jwt: "" # itsyou.online jwt token
+    persistent_volume_size: 100 # default to 10 Gi
+    state: installed # define CSI driver state : ["installed", "uninstalled"]. Default to "installed"
+  roles:
+    - {role: csi-driver}
+```
+
+To run the playbook on your `localhost` execute
+
+``` yaml
+ansible-playbook install-csi-driver.yaml
+```
+
 ## Example
 
 This repo includes an example of how to set up a kubernetes cluster on a G8 with CSI driver setup and example deployment which can be found in the [example folder](./example/README.md)
-    
 
 ## Known issues
 
