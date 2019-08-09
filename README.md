@@ -6,28 +6,16 @@ This repo implements the CSI spec v1.1.0 for [GIG.tech's OpenvCloud](https://gig
 
 OVC CSI driver can be installed with Ansible role [csi-driver](roles/csi-driver)
 
-Role variables:
-
-``` yaml
-# required
-server_url: "<G8 url>"
-account: "<Your-account-name>"
-client_jwt: "<Itsyo.online-JWT-token>"
-
-# optional
-persistent_volume_size: <Size of persistent storage> # default to 10 Gi
-state: "<Role action>" # takes of of values: ["installed", "uninstalled"]. Default to "installed"
-```
-
 Sample playbook `install-csi-driver.yaml`:
 
 ``` yaml
 - hosts: localhost
   vars:
-    server_url: your-G8.gig.tech
-    account: your-account
-    client_jwt: jwt-token
-    persistent_volume_size: 100
+    server_url: "" # G8's URL
+    account: "" # account name
+    client_jwt: "" # itsyou.online jwt token
+    persistent_volume_size: 100 # default to 10 Gi
+    state: installed # define CSI driver state : ["installed", "uninstalled"]. Default to "installed"
   roles:
     - {role: csi-driver}
 ```
