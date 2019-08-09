@@ -1,4 +1,0 @@
-server_url: "{{ lookup('env','server_url') }}"
-account: "{{ lookup('env','account') }}"
-client_jwt: "{{ lookup('env','client_jwt') }}"
-persistent_volume_size: "{{ lookup('env','persistent_volume_size') }}"

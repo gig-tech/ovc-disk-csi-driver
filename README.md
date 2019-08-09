@@ -11,31 +11,38 @@ Role variables:
 ``` yaml
 # required
 server_url: "<G8 url>"
+account: "<Your-account-name>"
+client_jwt: "<Itsyo.online-JWT-token>"
 
-cluster_url: "https://your-g8.gig.tech"
-account: "your-account-name"
-client_jwt: "ItsyoOnline-JWT-token"
-persistent_volume_size: "Size of persistent storage"
+# optional
+persistent_volume_size: <Size of persistent storage> # default to 10 Gi
+state: "<Role action>" # takes of of values: ["installed", "uninstalled"]. Default to "installed"
 ```
 
-Example of the configuration file setting credentials and required config see in [config.env.example](config.env.example).
-
-Example playbook:
+Example playbook `install-csi-driver.yaml`:
 
 ``` yaml
 - hosts: localhost
   vars:
-    state: installed
+    server_url: your-G8.gig.tech
+    account: your-account
+    client_jwt: jwt-token
+    persistent_volume_size: 100
   roles:
     - {role: csi-driver}
 ```
 
-Variable `state` defines the action to perform. Takes one of two variables: `installed` and `uninstalled`. Default to `installed`.
+Usage:
+
+To run the playbook on your `localhost` execute
+
+``` yaml
+ansible-playbook install-csi-driver.yaml
+```
 
 ## Example
 
 This repo includes an example of how to set up a kubernetes cluster on a G8 with CSI driver setup and example deployment which can be found in the [example folder](./example/README.md)
-    
 
 ## Known issues
 

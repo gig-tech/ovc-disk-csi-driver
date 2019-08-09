@@ -17,12 +17,3 @@ cmd
 # IDE
 .vscode
 .idea/
-
-# prevent config env file from being pushed
-config.env
-
-# kube config created by ansible playbook
-k8s_config
-
-# prevent tmp playbook configuration files from being pushed
-tmp/
