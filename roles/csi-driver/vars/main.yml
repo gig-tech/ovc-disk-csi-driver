@@ -1,6 +1,4 @@
 server_url: "{{ lookup('env','server_url') }}"
-mnt: "{{ groups['mgt'][0] }}"
-cluster_url: "https://{{ hostvars[mnt]['ansible_host'] }}:{{ kubernetes_port }}"
 account: "{{ lookup('env','account') }}"
 client_jwt: "{{ lookup('env','client_jwt') }}"
 persistent_volume_size: "{{ lookup('env','persistent_volume_size') }}"
