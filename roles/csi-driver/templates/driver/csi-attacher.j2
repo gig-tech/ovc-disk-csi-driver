@@ -1,25 +1,9 @@
-kind: Service
-apiVersion: v1
-metadata:
-  namespace: ovc-disk-csi
-  name: ovc-disk-csi-driver-attacher
-  labels:
-    app: ovc-disk-csi-driver-attacher
-spec:
-  selector:
-    app: ovc-disk-csi-driver-attacher
-  ports:
-    - name: dummy
-      port: 12345
-
----
-kind: StatefulSet
+kind: Deployment
 apiVersion: apps/v1
 metadata:
   namespace: ovc-disk-csi
   name: ovc-disk-csi-driver-attacher
 spec:
-  serviceName: "ovc-disk-csi-driver-attacher"
   replicas: 1
   selector:
     matchLabels:
