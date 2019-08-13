@@ -154,13 +154,15 @@ func generateG8s(c *config.Driver) (map[string]g8, error) {
 }
 
 func currentG8(g8s map[string]g8, log *logrus.Logger) (string, error) {
-	nodeUUID, err := getNodeUUID()
-	if err != nil {
-		return "", err
-	}
+	nodeUUID := ""
 
 	for g8, g8Config := range g8s {
 		log.Debugf("Looking for node on G8 %s", g8)
+
+		nodeUUID, err := getMachineID(g8Config.client)
+		if err != nil {
+			continue
+		}
 
 		_, err = g8Config.client.Machines.GetByReferenceID(nodeUUID)
 		if err == nil {
