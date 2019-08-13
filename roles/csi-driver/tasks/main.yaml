@@ -57,17 +57,15 @@
     kubectl apply -f tmp/driver
   when: state=="installed"
 
-- name: Apply app config
-  shell: |
-    kubectl apply -f tmp/app
-  when: state=="installed"
-
-- debug: var=state
 - name: Uninstall CSI driver
   shell: |
-    kubectl delete -f tmp/app || true
     kubectl delete -f tmp/driver || true
     kubectl delete secret ovc-disk-csi-driver-secret --namespace ovc-disk-csi || true
     kubectl delete -f tmp/namespaces || true
   when: state=="uninstalled"
 
+- name: Delete tmp directory
+  file:
+    path: "tmp"
+    state: absent
+  when: state=="uninstalled"
