@@ -11,10 +11,9 @@ Sample playbook `install-csi-driver.yaml`:
 ``` yaml
 - hosts: localhost
   vars:
-    server_url: "" # G8's URL
-    account: "" # account name
-    client_jwt: "" # itsyou.online jwt token
-    persistent_volume_size: 100 # default to 10 Gi
+    server_url: ""   # G8's URL
+    account: ""      # account name
+    client_jwt: ""   # itsyou.online jwt token
     state: installed # define CSI driver state : ["installed", "uninstalled"]. Default to "installed"
   roles:
     - {role: csi-driver}
