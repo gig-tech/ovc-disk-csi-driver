@@ -77,17 +77,12 @@ func NewDriver(driverCfg *config.Driver, mounter *mount.SafeFormatAndMount) (*Dr
 		mounter = newSafeMounter()
 	}
 
-	nodeG8, err := currentG8(g8Configs, log)
+	nodeG8, machineID, err := getG8NodeID(g8Configs, log)
 	if err != nil {
-		return nil, fmt.Errorf("failed fetching node's g8: %s", err)
+		return nil, fmt.Errorf("failed fetching node's g8 and node ID: %s", err)
 	}
 
-	machineID, err := getMachineID(g8Configs[nodeG8].client)
-	if err != nil {
-		return nil, fmt.Errorf("failed fetching the node ID %s", err)
-	}
-
-	// TODO: fetch G8 name
+	// TODO: turn machine ID into node id
 	nodeID := machineID
 
 	logEntry := log.WithFields(logrus.Fields{
@@ -153,7 +148,8 @@ func generateG8s(c *config.Driver) (map[string]g8, error) {
 	return g8s, nil
 }
 
-func currentG8(g8s map[string]g8, log *logrus.Logger) (string, error) {
+// getG8NodeID fetches the G8 and node id of where the instance is running on
+func getG8NodeID(g8s map[string]g8, log *logrus.Logger) (string, string, error) {
 	nodeUUID := ""
 
 	for g8, g8Config := range g8s {
@@ -166,11 +162,11 @@ func currentG8(g8s map[string]g8, log *logrus.Logger) (string, error) {
 
 		_, err = g8Config.client.Machines.GetByReferenceID(nodeUUID)
 		if err == nil {
-			return g8, nil
+			return g8, nodeUUID, nil
 		}
 	}
 
-	return "", fmt.Errorf("G8 not found for machine %s", nodeUUID)
+	return "", "", fmt.Errorf("G8 not found for machine %s", nodeUUID)
 }
 
 // Run runs the driver
