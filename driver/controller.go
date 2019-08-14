@@ -31,14 +31,14 @@ import (
 
 const (
 	_ = iota
-	// KB represents a kilobyte
-	KB = 1 << (10 * iota)
-	// MB represents a megabyte
-	MB
-	// GB represents a gigabyte
-	GB
-	// TB represents a terabyte
-	TB
+	// KiB represents a kibibyte
+	KiB = 1 << (10 * iota)
+	// MiB represents a mebibyte
+	MiB
+	// GiB represents a gibibyte
+	GiB
+	// TiB represents a tebibyte
+	TiB
 )
 
 const (
@@ -47,15 +47,15 @@ const (
 
 	// minimumVolumeSizeInBytes is used to validate that the user is not trying
 	// to create a volume that is smaller than what we support
-	minimumVolumeSizeInBytes int64 = 1 * GB
+	minimumVolumeSizeInBytes int64 = 1 * GiB
 
 	// maximumVolumeSizeInBytes is used to validate that the user is not trying
 	// to create a volume that is larger than what we support
-	maximumVolumeSizeInBytes int64 = 2000 * GB
+	maximumVolumeSizeInBytes int64 = 2 * TiB
 
 	// defaultVolumeSizeInBytes is used when the user did not provide a size or
 	// the size they provided did not satisfy our requirements
-	defaultVolumeSizeInBytes int64 = 10 * GB
+	defaultVolumeSizeInBytes int64 = 10 * GiB
 )
 
 // CreateVolume creates a new volume from the given request. The function is
@@ -88,7 +88,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
 					VolumeId:      strconv.Itoa(vol.ID),
-					CapacityBytes: int64(vol.Size) * GB,
+					CapacityBytes: int64(vol.Size) * GiB,
 				},
 			}, nil
 		}
@@ -97,7 +97,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 	diskConfig := &ovc.DiskConfig{
 		Name:        volumeName,
 		Description: createdByGig,
-		Size:        int(size / GB),
+		Size:        int(size / GiB),
 		AccountID:   d.accountID,
 		GridID:      d.gridID,
 		Type:        "D",
@@ -105,7 +105,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	ll := d.log.WithFields(logrus.Fields{
 		"volume_name":             volumeName,
-		"storage_size_giga_bytes": size / GB,
+		"storage_size_giga_bytes": size / GiB,
 		"method":                  "create_volume",
 		"volume_capabilities":     req.VolumeCapabilities,
 	})
@@ -522,17 +522,17 @@ func formatBytes(inputBytes int64) string {
 	unit := ""
 
 	switch {
-	case inputBytes >= TB:
-		output = output / TB
+	case inputBytes >= TiB:
+		output = output / TiB
 		unit = "Ti"
-	case inputBytes >= GB:
-		output = output / GB
+	case inputBytes >= GiB:
+		output = output / GiB
 		unit = "Gi"
-	case inputBytes >= MB:
-		output = output / MB
+	case inputBytes >= MiB:
+		output = output / MiB
 		unit = "Mi"
-	case inputBytes >= KB:
-		output = output / KB
+	case inputBytes >= KiB:
+		output = output / KiB
 		unit = "Ki"
 	case inputBytes == 0:
 		return "0"
