@@ -111,14 +111,19 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 	ll.Debug("Create volume called")
 
 	ll.WithField("volume_req", diskConfig).Debug("Creating volume")
-	volID, err := d.g8s[d.nodeG8].client.Disks.Create(diskConfig)
+	diskID, err := d.g8s[d.nodeG8].client.Disks.Create(diskConfig)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	diskIDInt, err := strconv.Atoi(diskID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	volID := newVolumeIDFromParts(d.nodeG8, diskIDInt)
 
 	resp := &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:      volID,
+			VolumeId:      volID.String(),
 			CapacityBytes: size,
 		},
 	}
