@@ -20,7 +20,6 @@ package driver
 
 import (
 	"io/ioutil"
-	"strconv"
 	"strings"
 
 	"github.com/gig-tech/ovc-sdk-go/ovc"
@@ -28,17 +27,17 @@ import (
 
 const uuidPath = "/sys/class/dmi/id/product_uuid"
 
-func getMachineID(client *ovc.Client) (string, error) {
+func getMachineID(client *ovc.Client) (int, error) {
 	nodeUUID, err := getMachineUUID()
 	if err != nil {
-		return "", err
+		return -1, err
 	}
 	machine, err := client.Machines.GetByReferenceID(nodeUUID)
 	if err != nil {
-		return "", err
+		return -1, err
 	}
 
-	return strconv.Itoa(machine.ID), nil
+	return machine.ID, nil
 }
 
 // getMachineUUID returns the node product uuid in lowercase

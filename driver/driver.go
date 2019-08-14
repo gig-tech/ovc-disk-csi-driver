@@ -33,6 +33,10 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 )
 
+const (
+	version = "0.0.1"
+)
+
 // Driver struct contains all relevant Driver information
 type Driver struct {
 	endpoint string
@@ -55,10 +59,6 @@ type g8 struct {
 	gridID    int
 }
 
-var (
-	version string
-)
-
 // NewDriver creates a new driver
 func NewDriver(driverCfg *config.Driver, mounter *mount.SafeFormatAndMount) (*Driver, error) {
 	log := logrus.New()
@@ -77,13 +77,10 @@ func NewDriver(driverCfg *config.Driver, mounter *mount.SafeFormatAndMount) (*Dr
 		mounter = newSafeMounter()
 	}
 
-	nodeG8, machineID, err := getG8NodeID(g8Configs, log)
+	nodeG8, nodeID, err := getG8NodeID(g8Configs, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching node's g8 and node ID: %s", err)
 	}
-
-	// TODO: turn machine ID into node id
-	nodeID := machineID
 
 	logEntry := log.WithFields(logrus.Fields{
 		"node_id": nodeID,
@@ -93,7 +90,7 @@ func NewDriver(driverCfg *config.Driver, mounter *mount.SafeFormatAndMount) (*Dr
 		endpoint: driverCfg.Endpoint,
 		g8s:      g8Configs,
 		nodeG8:   nodeG8,
-		nodeID:   nodeID,
+		nodeID:   nodeID.String(),
 		mounter:  mounter,
 		log:      logEntry,
 		volumeCaps: []csi.VolumeCapability_AccessMode{
@@ -149,24 +146,20 @@ func generateG8s(c *config.Driver) (map[string]g8, error) {
 }
 
 // getG8NodeID fetches the G8 and node id of where the instance is running on
-func getG8NodeID(g8s map[string]g8, log *logrus.Logger) (string, string, error) {
-	nodeUUID := ""
-
+func getG8NodeID(g8s map[string]g8, log *logrus.Logger) (string, *nodeID, error) {
 	for g8, g8Config := range g8s {
 		log.Debugf("Looking for node on G8 %s", g8)
 
-		nodeUUID, err := getMachineID(g8Config.client)
-		if err != nil {
-			continue
+		machineID, err := getMachineID(g8Config.client)
+		if err == nil {
+			nodeID := newNodeIDFromParts(g8, machineID)
+			return g8, nodeID, nil
 		}
 
-		_, err = g8Config.client.Machines.GetByReferenceID(nodeUUID)
-		if err == nil {
-			return g8, nodeUUID, nil
-		}
+		log.Debugf("Error getting machine ID while looping G8s: %s", err)
 	}
 
-	return "", "", fmt.Errorf("G8 not found for machine %s", nodeUUID)
+	return "", nil, fmt.Errorf("G8 not found for this machine")
 }
 
 // Run runs the driver

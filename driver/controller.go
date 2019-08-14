@@ -183,12 +183,21 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 	logger.Debug("Controller publish volume called")
 
 	// check if volume exist before trying to attach it
-	vol, err := d.g8s[d.nodeG8].client.Disks.Get(req.VolumeId)
+	volID, err := newVolumeID(req.VolumeId)
 	if err != nil {
 		return nil, err
 	}
 
-	machine, err := d.g8s[d.nodeG8].client.Machines.Get(req.NodeId)
+	vol, err := d.g8s[volID.g8].client.Disks.Get(strconv.Itoa(volID.diskID))
+	if err != nil {
+		return nil, err
+	}
+
+	nodeID, err := newNodeID(req.NodeId)
+	if err != nil {
+		return nil, err
+	}
+	machine, err := d.g8s[nodeID.g8].client.Machines.Get(strconv.Itoa(nodeID.machineID))
 	if err != nil {
 		return nil, err
 	}

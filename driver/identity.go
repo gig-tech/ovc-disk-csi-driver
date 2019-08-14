@@ -26,7 +26,7 @@ import (
 func (d *Driver) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
 	return &csi.GetPluginInfoResponse{
 		Name:          "disk.ovc.csi.gig.tech",
-		VendorVersion: "0.0.1",
+		VendorVersion: GetVersion(),
 	}, nil
 }
 
