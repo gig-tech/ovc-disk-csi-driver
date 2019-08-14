@@ -30,7 +30,6 @@ import (
 )
 
 const (
-	_ = iota
 	// KiB represents a kibibyte
 	KiB = 1 << (10 * iota)
 	// MiB represents a mebibyte
