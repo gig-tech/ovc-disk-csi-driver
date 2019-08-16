@@ -288,33 +288,35 @@ func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.Control
 		return nil, status.Error(codes.InvalidArgument, "ControllerPublishVolume Volume ID must be provided")
 	}
 
-	machineID, err := strconv.Atoi(req.NodeId)
+	nodeID, err := newNodeID(req.NodeId)
 	if err != nil {
-		d.log.WithField("node_id", req.NodeId).Warn("node ID cannot be converted to an integer")
+		d.log.WithField("node_id", req.NodeId).Warnf("Node ID could not be parsed: %s", err)
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse node ID: %s", err)
 	}
 
-	volID, err := strconv.Atoi(req.VolumeId)
+	volID, err := newVolumeID(req.VolumeId)
 	if err != nil {
-		d.log.WithField("volume_id", req.VolumeId).Warn("volume ID cannot be converted to an integer")
+		d.log.WithField("volume_id", req.VolumeId).Warnf("Volume ID could not be parsed: %s", err)
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse volume ID: %s", err)
 	}
 
 	ll := d.log.WithFields(logrus.Fields{
 		"volume_id":  req.VolumeId,
 		"node_id":    req.NodeId,
-		"machine_id": machineID,
+		"machine_id": nodeID.String(),
 		"method":     "controller_unpublish_volume",
 	})
 	ll.Debug("Controller unpublish volume called")
 
 	diskConfig := &ovc.DiskAttachConfig{
-		MachineID: machineID,
-		DiskID:    volID,
+		MachineID: nodeID.machineID,
+		DiskID:    volID.diskID,
 	}
 
-	err = d.g8s[d.nodeG8].client.Disks.Detach(diskConfig)
+	err = d.g8s[volID.g8].client.Disks.Detach(diskConfig)
 	if err != nil {
 		ll.Debugf("Failed to detach volume %s from node %s: %q", req.VolumeId, req.NodeId, err)
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Failed detach volume: %s", err)
 	}
 	ll.Debug("Volume is detached")
 
@@ -340,7 +342,12 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 	})
 	ll.Debug("Validate volume capabilities called")
 
-	if _, err := d.g8s[d.nodeG8].client.Disks.Get(req.VolumeId); err != nil {
+	volID, err := newVolumeID(req.VolumeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse volume ID: %s", err)
+	}
+
+	if _, err := d.g8s[volID.g8].client.Disks.Get(strconv.Itoa(volID.diskID)); err != nil {
 		return nil, status.Error(codes.NotFound, "Volume not found")
 	}
 
@@ -361,27 +368,29 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 
 // ListVolumes returns a list of all requested volumes
 func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
-	var err error
 	ll := d.log.WithFields(logrus.Fields{
 		"account_id": d.g8s[d.nodeG8].accountID,
 		"method":     "list_volumes",
 	})
 	ll.Debug("List volumes called")
 
-	disks, err := d.g8s[d.nodeG8].client.Disks.List(d.g8s[d.nodeG8].accountID)
-	if err != nil {
-		return nil, err
-	}
-
 	var entries []*csi.ListVolumesResponse_Entry
-	for _, disk := range *disks {
-		diskID := strconv.Itoa(disk.ID)
-		entries = append(entries, &csi.ListVolumesResponse_Entry{
-			Volume: &csi.Volume{
-				VolumeId:      diskID,
-				CapacityBytes: int64(disk.Size),
-			},
-		})
+	for g8Name, g8 := range d.g8s {
+		disks, err := g8.client.Disks.List(g8.accountID)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Failed to retrieve disks from OVC (G8: %s): %s", g8Name, err)
+		}
+
+		for _, disk := range *disks {
+			volID := newVolumeIDFromParts(g8Name, disk.ID)
+			entries = append(entries, &csi.ListVolumesResponse_Entry{
+				Volume: &csi.Volume{
+					VolumeId:      volID.String(),
+					CapacityBytes: int64(disk.Size),
+				},
+			})
+		}
+
 	}
 
 	resp := &csi.ListVolumesResponse{
@@ -453,7 +462,6 @@ func (d *Driver) ListSnapshots(ctx context.Context, req *csi.ListSnapshotsReques
 
 // ControllerGetCapabilities returns the capabilities of the controller service.
 func (d *Driver) ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
-
 	var caps []*csi.ControllerServiceCapability
 	for _, cap := range d.controllerCaps {
 		c := &csi.ControllerServiceCapability{
@@ -471,6 +479,26 @@ func (d *Driver) ControllerGetCapabilities(ctx context.Context, req *csi.Control
 	}).Debug("Controller get capabilities called")
 
 	return &csi.ControllerGetCapabilitiesResponse{Capabilities: caps}, nil
+}
+
+func (d *Driver) isValidVolumeCapabilities(volCaps []*csi.VolumeCapability) bool {
+	hasSupport := func(cap *csi.VolumeCapability) bool {
+		for _, c := range d.volumeCaps {
+			if c.GetMode() == cap.AccessMode.GetMode() {
+				return true
+			}
+		}
+		return false
+	}
+
+	foundAll := true
+	for _, c := range volCaps {
+		if !hasSupport(c) {
+			foundAll = false
+		}
+	}
+
+	return foundAll
 }
 
 // extractStorage extracts the storage size in bytes from the given capacity
@@ -553,22 +581,3 @@ func formatBytes(inputBytes int64) string {
 	return result + unit
 }
 
-func (d *Driver) isValidVolumeCapabilities(volCaps []*csi.VolumeCapability) bool {
-	hasSupport := func(cap *csi.VolumeCapability) bool {
-		for _, c := range d.volumeCaps {
-			if c.GetMode() == cap.AccessMode.GetMode() {
-				return true
-			}
-		}
-		return false
-	}
-
-	foundAll := true
-	for _, c := range volCaps {
-		if !hasSupport(c) {
-			foundAll = false
-		}
-	}
-
-	return foundAll
-}
