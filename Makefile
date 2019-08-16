@@ -20,7 +20,7 @@ BUILD_OUTPUT=bin/ovc-csi-driver
 .PHONY: ovc-csi-driver
 ovc-csi-driver:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-X github.com/gig-tech/csi.vendorVersion=${VERSION}" -o $(BUILD_OUTPUT) ./cmd/
+	 GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -mod vendor -ldflags "-X github.com/gig-tech/csi.vendorVersion=${VERSION}" -o $(BUILD_OUTPUT) ./cmd/
 
 .PHONY: test
 test:
