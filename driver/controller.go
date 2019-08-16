@@ -31,13 +31,13 @@ import (
 
 const (
 	// KiB represents a kibibyte
-	KiB = 1 << (10 * iota)
+	KiB = 1024
 	// MiB represents a mebibyte
-	MiB
+	MiB = KiB * 1024
 	// GiB represents a gibibyte
-	GiB
+	GiB = MiB * 1024
 	// TiB represents a tebibyte
-	TiB
+	TiB = GiB * 1024
 )
 
 const (
