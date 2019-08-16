@@ -11,12 +11,14 @@ jobs:
     - stage: test
       if: NOT tag IS present
       script:
-        - make test
-        - make
+        - make test || travis_terminate 1
+        - make || travis_terminate 1
         - |
           if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]
           then
             docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+            make image VERSION=${TRAVIS_COMMIT::8}
+            make push  VERSION=${TRAVIS_COMMIT::8}
             make image VERSION=latest
             make push VERSION=latest
           fi
