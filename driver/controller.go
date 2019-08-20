@@ -75,21 +75,23 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	// get volume first, if it's created do no thing
 	volumeName := req.Name
-	volumes, err := d.g8s[d.nodeG8].client.Disks.List(d.g8s[d.nodeG8].accountID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	for _, g8 := range d.g8s {
+		volumes, err := g8.client.Disks.List(g8.accountID)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 
-	// volume already exist, do nothing
-	for _, vol := range *volumes {
-		if vol.Name == req.Name {
-			d.log.Debug("Volume was already created")
-			return &csi.CreateVolumeResponse{
-				Volume: &csi.Volume{
-					VolumeId:      strconv.Itoa(vol.ID),
-					CapacityBytes: int64(vol.Size) * GiB,
-				},
-			}, nil
+		// volume already exist, do nothing
+		for _, vol := range *volumes {
+			if vol.Name == req.Name {
+				d.log.Debug("Volume already exists")
+				return &csi.CreateVolumeResponse{
+					Volume: &csi.Volume{
+						VolumeId:      strconv.Itoa(vol.ID),
+						CapacityBytes: int64(vol.Size) * GiB,
+					},
+				}, nil
+			}
 		}
 	}
 
@@ -580,4 +582,3 @@ func formatBytes(inputBytes int64) string {
 
 	return result + unit
 }
-
