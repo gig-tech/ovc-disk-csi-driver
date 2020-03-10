@@ -24,6 +24,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/gig-tech/ovc-sdk-go/v2/ovc"
@@ -47,6 +49,9 @@ type Driver struct {
 	srv     *grpc.Server
 	log     *logrus.Entry
 	mounter *mount.SafeFormatAndMount
+
+	quit chan bool
+	done *sync.WaitGroup
 }
 
 var (
@@ -164,13 +169,41 @@ func (d *Driver) Run() error {
 
 	d.log.Infof("Listening for connections on address: %#v", listener.Addr())
 
+	d.log.Info("Starting JWT maintainer to refresh the JWT at least once each 30 days.")
+	d.quit = make(chan bool)
+	d.done = &sync.WaitGroup{}
+	go func() {
+		d.client.JWT.Get()
+		start := time.Now()
+		for {
+			select {
+			case <-d.quit:
+				d.done.Done()
+				return
+			default:
+				if time.Since(start) > time.Duration(29*24*time.Hour) {
+					_, err := d.client.JWT.Get()
+					if err != nil {
+						d.log.Errorf("Error refreshing the JWT: %s", err)
+					} else {
+						start = time.Now()
+					}
+				}
+				time.Sleep(time.Duration(1 * time.Second))
+			}
+		}
+	}()
+
 	return d.srv.Serve(listener)
 }
 
 // Stop stops the plugin
 func (d *Driver) Stop() {
-	d.log.Info("server stopped")
+	d.log.Info("Server stopped")
 	d.srv.Stop()
+	d.log.Info("Waiting for JWT refresher to finish")
+	d.quit <- true
+	d.done.Wait()
 }
 
 // GetVersion returns the current version
