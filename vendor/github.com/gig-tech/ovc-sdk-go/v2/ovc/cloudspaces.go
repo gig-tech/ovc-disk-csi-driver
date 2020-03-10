@@ -1,10 +1,8 @@
 package ovc
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"strconv"
 )
 
@@ -21,10 +19,10 @@ type CloudSpaceConfig struct {
 	MaxNetworkPeerTransfer int     `json:"maxNetworkPeerTransfer,omitempty"`
 	MaxNumPublicIP         int     `json:"maxNumPublicIP,omitempty"`
 	AllowedVMSizes         []int   `json:"allowedVMSizes,omitempty"`
-	PrivateNetwork         string  `json:"privatenetwork"`
-	Mode                   string  `json:"mode"`
-	Type                   string  `json:"type"`
-	ExternalnetworkID      string  `json:"externalnetworkId"`
+	PrivateNetwork         string  `json:"privatenetwork,omitempty"`
+	Mode                   string  `json:"mode,omitempty"`
+	Type                   string  `json:"type,omitempty"`
+	ExternalnetworkID      string  `json:"externalnetworkId,omitempty"`
 }
 
 // ResourceLimits contains all information related to resource limits
@@ -124,15 +122,7 @@ type CloudSpaceServiceOp struct {
 func (s *CloudSpaceServiceOp) List() (*CloudSpaceList, error) {
 	cloudSpaceMap := make(map[string]interface{})
 	cloudSpaceMap["includedeleted"] = false
-	cloudSpaceJSON, err := json.Marshal(cloudSpaceMap)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/list", bytes.NewBuffer(cloudSpaceJSON))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
+	body, err := s.client.Post("/cloudapi/cloudspaces/list", cloudSpaceMap, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -154,15 +144,8 @@ func (s *CloudSpaceServiceOp) Get(cloudSpaceID string) (*CloudSpace, error) {
 		return nil, err
 	}
 	cloudSpaceIDMap["cloudspaceId"] = cloudSpaceIDInt
-	cloudSpaceIDJson, err := json.Marshal(cloudSpaceIDMap)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/get", bytes.NewBuffer(cloudSpaceIDJson))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
+
+	body, err := s.client.Post("/cloudapi/cloudspaces/get", cloudSpaceIDMap, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -193,15 +176,7 @@ func (s *CloudSpaceServiceOp) GetByNameAndAccount(cloudSpaceName string, account
 
 // Create a new CloudSpace
 func (s *CloudSpaceServiceOp) Create(cloudSpaceConfig *CloudSpaceConfig) (string, error) {
-	cloudSpaceJSON, err := json.Marshal(*cloudSpaceConfig)
-	if err != nil {
-		return "", err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/create", bytes.NewBuffer(cloudSpaceJSON))
-	if err != nil {
-		return "", err
-	}
-	body, err := s.client.Do(req)
+	body, err := s.client.Post("/cloudapi/cloudspaces/create", *cloudSpaceConfig, OperationalActionTimeout)
 	if err != nil {
 		return "", err
 	}
@@ -211,31 +186,13 @@ func (s *CloudSpaceServiceOp) Create(cloudSpaceConfig *CloudSpaceConfig) (string
 
 // Delete a CloudSpace
 func (s *CloudSpaceServiceOp) Delete(cloudSpaceConfig *CloudSpaceDeleteConfig) error {
-	cloudSpaceJSON, err := json.Marshal(*cloudSpaceConfig)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/delete", bytes.NewBuffer(cloudSpaceJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
-
+	_, err := s.client.Post("/cloudapi/cloudspaces/delete", *cloudSpaceConfig, OperationalActionTimeout)
 	return err
 }
 
 // Update an existing CloudSpace
 func (s *CloudSpaceServiceOp) Update(cloudSpaceConfig *CloudSpaceConfig) error {
-	cloudSpaceJSON, err := json.Marshal(*cloudSpaceConfig)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/update", bytes.NewBuffer(cloudSpaceJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
-
+	_, err := s.client.Post("/cloudapi/cloudspaces/update", *cloudSpaceConfig, ModelActionTimeout)
 	return err
 }
 
@@ -245,15 +202,6 @@ func (s *CloudSpaceServiceOp) SetDefaultGateway(cloudspaceID int, gateway string
 	csMap["cloudspaceId"] = cloudspaceID
 	csMap["gateway"] = gateway
 
-	csMapJSON, err := json.Marshal(csMap)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/cloudspaces/setDefaultGateway", bytes.NewBuffer(csMapJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
-
+	_, err := s.client.Post("/cloudapi/cloudspaces/setDefaultGateway", csMap, OperationalActionTimeout)
 	return err
 }

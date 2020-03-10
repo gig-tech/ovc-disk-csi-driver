@@ -1,9 +1,7 @@
 package ovc
 
 import (
-	"bytes"
 	"encoding/json"
-	"net/http"
 )
 
 // TemplateList is a list of templates
@@ -35,18 +33,12 @@ type TemplateServiceOp struct {
 func (s *TemplateServiceOp) List(accountID int) (*TemplateList, error) {
 	templateMap := make(map[string]interface{})
 	templateMap["accountId"] = 4
-	templateJSON, err := json.Marshal(templateMap)
+
+	body, err := s.client.Post("/cloudapi/images/list", templateMap, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/images/list", bytes.NewBuffer(templateJSON))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
+
 	templates := new(TemplateList)
 	err = json.Unmarshal(body, &templates)
 	if err != nil {

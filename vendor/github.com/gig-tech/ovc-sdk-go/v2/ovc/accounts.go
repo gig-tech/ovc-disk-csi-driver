@@ -3,7 +3,6 @@ package ovc
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 )
 
 // Account contains
@@ -59,11 +58,7 @@ func (s *AccountServiceOp) GetIDByName(account string) (int, error) {
 
 // List all accounts
 func (s *AccountServiceOp) List() (*AccountList, error) {
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/accounts/list", nil)
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
+	body, err := s.client.PostRaw("/cloudapi/accounts/list", nil, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}

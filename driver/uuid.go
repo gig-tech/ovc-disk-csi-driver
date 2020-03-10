@@ -1,5 +1,3 @@
-// +build linux
-
 /*
 Copyright 2018-2019 GIG TECHNOLOGY NV
 
@@ -23,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gig-tech/ovc-sdk-go/ovc"
+	"github.com/gig-tech/ovc-sdk-go/v2/ovc"
 )
 
 const uuidPath = "/sys/class/dmi/id/product_uuid"

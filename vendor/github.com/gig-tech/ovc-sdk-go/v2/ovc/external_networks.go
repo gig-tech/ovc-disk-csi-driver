@@ -1,10 +1,8 @@
 package ovc
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strconv"
 )
 
@@ -53,19 +51,17 @@ type ExternalNetworkServiceOp struct {
 // Get external network
 func (s *ExternalNetworkServiceOp) Get(id string) (*ExternalNetworkInfo, error) {
 	externalNetworkIDMap := make(map[string]interface{})
-	externalNetworkIDMap["id"], _ = strconv.Atoi(id)
-	externalNetworkJSON, err := json.Marshal(externalNetworkIDMap)
+	var err error
+	externalNetworkIDMap["id"], err = strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/externalnetwork/get", bytes.NewBuffer(externalNetworkJSON))
+
+	body, err := s.client.Post("/cloudapi/externalnetwork/get", externalNetworkIDMap, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
-	body, err := s.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
+
 	externalNetworkInfo := new(ExternalNetworkInfo)
 	err = json.Unmarshal(body, &externalNetworkInfo)
 	if err != nil {
@@ -98,19 +94,12 @@ func (s *ExternalNetworkServiceOp) GetByName(name string, accountID string) (*Ex
 func (s *ExternalNetworkServiceOp) List(accountID int) (*ExternalNetworkList, error) {
 	accountIDMap := make(map[string]interface{})
 	accountIDMap["accountId"] = accountID
-	accountIDJson, err := json.Marshal(accountIDMap)
+
+	body, err := s.client.Post("/cloudapi/externalnetwork/list", accountIDMap, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/externalnetwork/list", bytes.NewBuffer(accountIDJson))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
 	externalNetworks := new(ExternalNetworkList)
 	err = json.Unmarshal(body, &externalNetworks)
 	if err != nil {

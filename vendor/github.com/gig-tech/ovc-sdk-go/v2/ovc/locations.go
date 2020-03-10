@@ -2,7 +2,6 @@ package ovc
 
 import (
 	"encoding/json"
-	"net/http"
 )
 
 // LocationService represents Location service interface
@@ -31,11 +30,7 @@ type LocationList []LocationInfo
 
 // List lists all locations of the G8
 func (s *LocationServiceOp) List() (*LocationList, error) {
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/locations/list", nil)
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
+	body, err := s.client.PostRaw("/cloudapi/locations/list", nil, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}

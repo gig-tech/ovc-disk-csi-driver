@@ -57,27 +57,30 @@ func SetJWTPublicKey(key string) error {
 // NewJWT returns a new JWT type
 // supported identity providers:
 // IYO (itsyou.online)
+// Deprecated. Use NewJWTFromIYO instead.
 func NewJWT(jwtStr string, idProvider string, logger *logrus.Entry) (*JWT, error) {
-	if logger == nil {
-		log := logrus.New()
-		logger = log.WithField("source", "OpenvCloud client JWT manager")
+	if idProvider != "IYO" {
+		return nil, fmt.Errorf("unsupported identity provider. Supported providers are: IYO")
 	}
 
+	if logger == nil {
+		logger = logrus.New().WithField("source", "OpenvCloud client JWT manager")
+	}
+
+	return NewJWTFromIYO(jwtStr, LogrusAdapter{logger})
+}
+
+// NewJWTFromIYO returns a new JWT type from a token string obtained from itsyou.online
+func NewJWTFromIYO(jwtStr string, logger Logger) (*JWT, error) {
 	token, err := parseJWT(jwtStr, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	jwt := &JWT{
-		original: token,
-		logger:   logger,
-	}
-
-	switch idProvider {
-	case "IYO":
-		jwt.refreshFunc = getIYORefreshedJWT
-	default:
-		return nil, fmt.Errorf("unsupported identity provider. Supported providers are: IYO")
+		original:    token,
+		logger:      logger,
+		refreshFunc: getIYORefreshedJWT,
 	}
 
 	refreshable, err := isRefreshable(token, logger)
@@ -91,7 +94,7 @@ func NewJWT(jwtStr string, idProvider string, logger *logrus.Entry) (*JWT, error
 	return jwt, nil
 }
 
-func parseJWT(jwtStr string, logger *logrus.Entry) (*jwtLib.Token, error) {
+func parseJWT(jwtStr string, logger Logger) (*jwtLib.Token, error) {
 	logger.Debug("Parsing JWT")
 	parser := new(jwtLib.Parser)
 	parser.SkipClaimsValidation = true
@@ -103,7 +106,7 @@ func parseJWT(jwtStr string, logger *logrus.Entry) (*jwtLib.Token, error) {
 	})
 }
 
-func isRefreshable(token *jwtLib.Token, logger *logrus.Entry) (bool, error) {
+func isRefreshable(token *jwtLib.Token, logger Logger) (bool, error) {
 	logger.Debug("Checking if JWT is refreshable")
 	claims, ok := token.Claims.(jwtLib.MapClaims)
 	if !ok {
@@ -119,7 +122,7 @@ type JWT struct {
 	current     *jwtLib.Token
 	refreshable bool
 	refreshFunc func(jwtStr string) (string, error)
-	logger      *logrus.Entry
+	logger      Logger
 }
 
 // Get returns the JWT
@@ -177,7 +180,7 @@ func (j *JWT) refresh() error {
 	return nil
 }
 
-func isExpired(token *jwtLib.Token, logger *logrus.Entry) bool {
+func isExpired(token *jwtLib.Token, logger Logger) bool {
 	exp, err := isExpiredWithErr(token)
 	if err != nil {
 		logger.Errorf("Something went wrong checking experation of JWT: %s\n", err)

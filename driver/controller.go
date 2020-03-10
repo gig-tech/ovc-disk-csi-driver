@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/gig-tech/ovc-sdk-go/ovc"
+	"github.com/gig-tech/ovc-sdk-go/v2/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -55,6 +55,9 @@ const (
 	// defaultVolumeSizeInBytes is used when the user did not provide a size or
 	// the size they provided did not satisfy our requirements
 	defaultVolumeSizeInBytes int64 = 10 * GiB
+
+	// diskType is used to specify the type of disk to be used in the G8
+	diskType = "D"
 )
 
 // CreateVolume creates a new volume from the given request. The function is
@@ -75,7 +78,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	// get volume first, if it's created do no thing
 	volumeName := req.Name
-	volumes, err := d.client.Disks.List(d.accountID)
+	volumes, err := d.client.Disks.List(d.accountID, diskType)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -99,7 +102,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Size:        int(size / GiB),
 		AccountID:   d.accountID,
 		GridID:      d.gridID,
-		Type:        "D",
+		Type:        diskType,
 	}
 
 	ll := d.log.WithFields(logrus.Fields{
@@ -151,6 +154,9 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 		Permanently: true,
 	}
 
+	// Serialize deleting disks
+	defer ovc.ReleaseLock(0)
+	ovc.GetLock(0)
 	err = d.client.Disks.Delete(deleteConfig)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -358,7 +364,7 @@ func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (
 	})
 	ll.Debug("List volumes called")
 
-	disks, err := d.client.Disks.List(d.accountID)
+	disks, err := d.client.Disks.List(d.accountID, diskType)
 	if err != nil {
 		return nil, err
 	}

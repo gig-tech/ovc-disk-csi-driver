@@ -1,11 +1,9 @@
 package ovc
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -95,15 +93,8 @@ func (s *ForwardingServiceOp) Create(portForwardingConfig *PortForwardingConfig)
 	if portForwardingConfig.PublicPort == 0 {
 		portForwardingConfig.PublicPort = s.getRandomPublicPort(portForwardingConfig)
 	}
-	portForwardingJSON, err := json.Marshal(*portForwardingConfig)
-	if err != nil {
-		return 0, err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/portforwarding/create", bytes.NewBuffer(portForwardingJSON))
-	if err != nil {
-		return 0, err
-	}
-	_, err = s.client.Do(req)
+
+	_, err := s.client.Post("/cloudapi/portforwarding/create", *portForwardingConfig, OperationalActionTimeout)
 	if err != nil {
 		return 0, err
 	}
@@ -113,48 +104,23 @@ func (s *ForwardingServiceOp) Create(portForwardingConfig *PortForwardingConfig)
 
 // Update an existing portforward
 func (s *ForwardingServiceOp) Update(portForwardingConfig *PortForwardingConfig) error {
-	portForwardingJSON, err := json.Marshal(*portForwardingConfig)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/portforwarding/updateByPort", bytes.NewBuffer(portForwardingJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
-
+	_, err := s.client.Post("/cloudapi/portforwarding/updateByPort", *portForwardingConfig, OperationalActionTimeout)
 	return err
 }
 
 // Delete an existing portforward
 func (s *ForwardingServiceOp) Delete(portForwardingConfig *PortForwardingConfig) error {
-	portForwardingJSON, err := json.Marshal(*portForwardingConfig)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/portforwarding/deleteByPort", bytes.NewBuffer(portForwardingJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
-
+	_, err := s.client.Post("/cloudapi/portforwarding/deleteByPort", *portForwardingConfig, OperationalActionTimeout)
 	return err
 }
 
 // List all portforwards
 func (s *ForwardingServiceOp) List(portForwardingConfig *PortForwardingConfig) (*PortForwardingList, error) {
-	portForwardingJSON, err := json.Marshal(*portForwardingConfig)
+	body, err := s.client.Post("/cloudapi/portforwarding/list", *portForwardingConfig, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/portforwarding/list", bytes.NewBuffer(portForwardingJSON))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
+
 	portForwardingList := new(PortForwardingList)
 	err = json.Unmarshal(body, &portForwardingList)
 	if err != nil {
@@ -170,16 +136,8 @@ func (s *ForwardingServiceOp) DeleteByPort(publicPort int, publicIP string, clou
 	pfMap["publicIp"] = publicIP
 	pfMap["publicPort"] = publicPort
 	pfMap["cloudspaceId"] = cloudSpaceID
-	pfJSON, err := json.Marshal(pfMap)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/portforwarding/deleteByPort", bytes.NewBuffer(pfJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
 
+	_, err := s.client.Post("/cloudapi/portforwarding/deleteByPort", pfMap, OperationalActionTimeout)
 	return err
 }
 
