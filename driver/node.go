@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/sirupsen/logrus"
@@ -58,7 +59,11 @@ func (d *Driver) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRe
 		return nil, status.Error(codes.InvalidArgument, "Volume capability not supported")
 	}
 
-	diskInfo, err := d.client.Disks.Get(volumeID)
+	diskID, err := strconv.Atoi(volumeID)
+	if err != nil {
+		return nil, err
+	}
+	diskInfo, err := d.client.Disks.Get(diskID)
 	if err != nil {
 		return nil, err
 	}

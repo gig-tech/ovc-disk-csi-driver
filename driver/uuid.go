@@ -21,22 +21,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gig-tech/ovc-sdk-go/v2/ovc"
+	"github.com/gig-tech/ovc-sdk-go/v3/ovc"
 )
 
 const uuidPath = "/sys/class/dmi/id/product_uuid"
 
-func getNodeID(client *ovc.Client) (string, error) {
+func getNodeID(client *ovc.Client) (string, int, error) {
 	rawID, err := ioutil.ReadFile(uuidPath)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 	id := strings.ToLower(strings.TrimSpace(string(rawID)))
 
 	machine, err := client.Machines.GetByReferenceID(id)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return strconv.Itoa(machine.ID), nil
+	return strconv.Itoa(machine.ID), machine.CloudspaceID, nil
 }
