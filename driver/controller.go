@@ -61,6 +61,7 @@ const (
 	diskType = "D"
 )
 
+// Mutex to serialize volume cleanup
 var serializeVolumeDeletes sync.Mutex
 
 // CreateVolume creates a new volume from the given request. The function is
