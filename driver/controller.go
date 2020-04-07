@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/gig-tech/ovc-sdk-go/ovc"
+	"github.com/gig-tech/ovc-sdk-go/v3/ovc"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -55,7 +56,13 @@ const (
 	// defaultVolumeSizeInBytes is used when the user did not provide a size or
 	// the size they provided did not satisfy our requirements
 	defaultVolumeSizeInBytes int64 = 10 * GiB
+
+	// diskType is used to specify the type of disk to be used in the G8
+	diskType = "D"
 )
+
+// Mutex to serialize volume cleanup
+var serializeVolumeDeletes sync.Mutex
 
 // CreateVolume creates a new volume from the given request. The function is
 // idempotent.
@@ -75,7 +82,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	// get volume first, if it's created do no thing
 	volumeName := req.Name
-	volumes, err := d.client.Disks.List(d.accountID)
+	volumes, err := d.client.Disks.List(d.accountID, diskType)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -99,7 +106,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Size:        int(size / GiB),
 		AccountID:   d.accountID,
 		GridID:      d.gridID,
-		Type:        "D",
+		Type:        diskType,
 	}
 
 	ll := d.log.WithFields(logrus.Fields{
@@ -118,7 +125,7 @@ func (d *Driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 
 	resp := &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:      volID,
+			VolumeId:      strconv.Itoa(volID),
 			CapacityBytes: size,
 		},
 	}
@@ -151,6 +158,9 @@ func (d *Driver) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest)
 		Permanently: true,
 	}
 
+	// Serialize deleting disks
+	serializeVolumeDeletes.Lock()
+	defer serializeVolumeDeletes.Unlock()
 	err = d.client.Disks.Delete(deleteConfig)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -186,13 +196,7 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 	})
 	logger.Debug("Controller publish volume called")
 
-	// check if volume exist before trying to attach it
-	vol, err := d.client.Disks.Get(req.VolumeId)
-	if err != nil {
-		return nil, err
-	}
-
-	machine, err := d.client.Machines.Get(req.NodeId)
+	diskID, err := strconv.Atoi(req.VolumeId)
 	if err != nil {
 		return nil, err
 	}
@@ -202,74 +206,29 @@ func (d *Driver) ControllerPublishVolume(ctx context.Context, req *csi.Controlle
 		return nil, err
 	}
 
-	diskID, err := strconv.Atoi(req.VolumeId)
-	if err != nil {
-		return nil, err
+	ac := attachConfig{
+		machineID: machineID,
+		diskID:    diskID,
+		result:    make(chan error),
 	}
 
-	// attach the volume to the correct node
-	diskConfig := &ovc.DiskAttachConfig{
-		MachineID: machineID,
-		DiskID:    diskID,
+	d.attach <- ac
+	result := <-ac.result
+	close(ac.result)
+	if result == nil {
+		return controllerPublishVolumeSuccessResponse(fmt.Sprintf("disk-%d", diskID), req.NodeId, diskID), nil
 	}
-	err = d.client.Disks.Attach(diskConfig)
-	if err != nil {
-		if nodeHasDisk(machine, diskID) {
-			logger.Debug("Disk was already attached to machine")
-			return controllerPublishVolumeSuccessResponse(vol.Name, req.NodeId, vol.ID)
-		}
-
-		machines, err := d.client.Machines.List(machine.CloudspaceID)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, m := range *machines {
-			machine, err := d.client.Machines.Get(strconv.Itoa(m.ID))
-			if err != nil {
-				return nil, err
-			}
-			if nodeHasDisk(machine, diskID) {
-				logger.Debugf("Disk attached to %d, detaching...", machine.ID)
-				detachConfig := &ovc.DiskAttachConfig{
-					MachineID: machineID,
-					DiskID:    diskID,
-				}
-				d.client.Disks.Detach(detachConfig)
-				break
-			}
-		}
-
-		err = d.client.Disks.Attach(diskConfig)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	logger.Debug("Volume is attached")
-
-	return controllerPublishVolumeSuccessResponse(vol.Name, req.NodeId, vol.ID)
+	return nil, result
 }
 
-func controllerPublishVolumeSuccessResponse(volumeName, nodeID string, volumeID int) (*csi.ControllerPublishVolumeResponse, error) {
+func controllerPublishVolumeSuccessResponse(volumeName, nodeID string, volumeID int) *csi.ControllerPublishVolumeResponse {
 	return &csi.ControllerPublishVolumeResponse{
 		PublishContext: map[string]string{
 			"PublishInfoVolumeName": volumeName,
 			"PublishInfoVolumeID":   strconv.Itoa(volumeID),
 			"PublishInfoNodeID":     nodeID,
 		},
-	}, nil
-}
-
-// nodeHasDiskChecks if specified node has specified disk attached
-func nodeHasDisk(machine *ovc.MachineInfo, diskID int) bool {
-	for _, disk := range machine.Disks {
-		if disk.ID == diskID {
-			return true
-		}
 	}
-
-	return false
 }
 
 // ControllerUnpublishVolume detaches the given volume from the node
@@ -296,19 +255,17 @@ func (d *Driver) ControllerUnpublishVolume(ctx context.Context, req *csi.Control
 	})
 	ll.Debug("Controller unpublish volume called")
 
-	diskConfig := &ovc.DiskAttachConfig{
-		MachineID: machineID,
-		DiskID:    volID,
+	diskConfig := attachConfig{
+		machineID: machineID,
+		diskID:    volID,
+		result:    make(chan error),
 	}
-
-	err = d.client.Disks.Detach(diskConfig)
-	if err != nil {
-		ll.Debugf("Failed to detach volume %s from node %s: %q", req.VolumeId, req.NodeId, err)
-		return nil, err
+	d.detach <- diskConfig
+	result := <-diskConfig.result
+	if result == nil {
+		return &csi.ControllerUnpublishVolumeResponse{}, nil
 	}
-	ll.Debug("Volume is detached")
-
-	return &csi.ControllerUnpublishVolumeResponse{}, nil
+	return nil, result
 }
 
 // ValidateVolumeCapabilities checks whether the volume capabilities requested
@@ -330,7 +287,11 @@ func (d *Driver) ValidateVolumeCapabilities(ctx context.Context, req *csi.Valida
 	})
 	ll.Debug("Validate volume capabilities called")
 
-	if _, err := d.client.Disks.Get(req.VolumeId); err != nil {
+	diskID, err := strconv.Atoi(req.VolumeId)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := d.client.Disks.Get(diskID); err != nil {
 		return nil, status.Error(codes.NotFound, "Volume not found")
 	}
 
@@ -358,7 +319,7 @@ func (d *Driver) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (
 	})
 	ll.Debug("List volumes called")
 
-	disks, err := d.client.Disks.List(d.accountID)
+	disks, err := d.client.Disks.List(d.accountID, diskType)
 	if err != nil {
 		return nil, err
 	}

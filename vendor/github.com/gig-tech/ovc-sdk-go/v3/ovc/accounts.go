@@ -3,7 +3,6 @@ package ovc
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 )
 
 // Account contains
@@ -12,28 +11,31 @@ type Account struct {
 	Name string `json:"name"`
 }
 
-// AccountList is a list of accounts
+// AccountACL holds Account ACL configuration
+type AccountACL struct {
+	Status      string `json:"status"`
+	Right       string `json:"right"`
+	Explicit    bool   `json:"explicit"`
+	UserGroupID string `json:"userGroupId"`
+	GUID        string `json:"guid"`
+	Type        string `json:"type"`
+}
+
+// AccountInfo is a list of accounts
 // Returned when using the List method
-type AccountList []struct {
-	ID           int    `json:"id"`
-	UpdateTime   int    `json:"updateTime"`
-	CreationTime int    `json:"creationTime"`
-	Name         string `json:"name"`
-	ACL          []struct {
-		Status      string `json:"status"`
-		Right       string `json:"right"`
-		Explicit    bool   `json:"explicit"`
-		UserGroupID string `json:"userGroupId"`
-		GUID        string `json:"guid"`
-		Type        string `json:"type"`
-	} `json:"acl"`
+type AccountInfo struct {
+	ID           int          `json:"id"`
+	UpdateTime   int          `json:"updateTime"`
+	CreationTime int          `json:"creationTime"`
+	Name         string       `json:"name"`
+	ACL          []AccountACL `json:"acl"`
 }
 
 // AccountService is an interface for interfacing with the Account
 // endpoints of the OVC API
 type AccountService interface {
 	GetIDByName(string) (int, error)
-	List() (*AccountList, error)
+	List() (*[]AccountInfo, error)
 }
 
 // AccountServiceOp handles communication with the account related methods of the
@@ -58,17 +60,13 @@ func (s *AccountServiceOp) GetIDByName(account string) (int, error) {
 }
 
 // List all accounts
-func (s *AccountServiceOp) List() (*AccountList, error) {
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/accounts/list", nil)
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
+func (s *AccountServiceOp) List() (*[]AccountInfo, error) {
+	body, err := s.client.PostRaw("/cloudapi/accounts/list", nil, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	accounts := new(AccountList)
+	accounts := new([]AccountInfo)
 	err = json.Unmarshal(body, &accounts)
 	if err != nil {
 		return nil, err

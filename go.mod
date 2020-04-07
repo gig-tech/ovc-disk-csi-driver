@@ -2,7 +2,7 @@ module github.com/gig-tech/ovc-disk-csi-driver
 
 require (
 	github.com/container-storage-interface/spec v1.1.0
-	github.com/gig-tech/ovc-sdk-go v1.4.0
+	github.com/gig-tech/ovc-sdk-go/v3 v3.0.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2 // indirect
@@ -13,3 +13,5 @@ require (
 	k8s.io/kubernetes v1.14.1
 	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
 )
+
+go 1.13

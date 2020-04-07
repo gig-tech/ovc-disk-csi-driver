@@ -29,13 +29,14 @@ func main() {
 	var url = flag.String("url", "", "OVC URL")
 	var account = flag.String("account", "", "Account name")
 	var verbose = flag.Bool("verbose", false, "Set verbose output")
+	var attacher = flag.Bool("attacher", false, "Add this flag on the attacher container")
 	flag.Parse()
 
 	ovcJWT := os.Getenv("OVC_JWT")
 
 	print(verbose)
 
-	drv, err := driver.NewDriver(*url, *endpoint, "", *account, nil, ovcJWT, *verbose)
+	drv, err := driver.NewDriver(*url, *endpoint, *account, nil, ovcJWT, *verbose, *attacher)
 	if err != nil {
 		log.Fatalln(err)
 	}

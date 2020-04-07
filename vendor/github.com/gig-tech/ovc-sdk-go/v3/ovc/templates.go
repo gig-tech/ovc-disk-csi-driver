@@ -1,14 +1,12 @@
 package ovc
 
 import (
-	"bytes"
 	"encoding/json"
-	"net/http"
 )
 
-// TemplateList is a list of templates
+// Template is a list of templates
 // Returned when using the List method
-type TemplateList []struct {
+type Template struct {
 	Username    interface{} `json:"username"`
 	Status      string      `json:"status"`
 	Description string      `json:"description"`
@@ -22,7 +20,7 @@ type TemplateList []struct {
 // TemplateService is an interface for interfacing with the Images
 // endpoints of the OVC API
 type TemplateService interface {
-	List(int) (*TemplateList, error)
+	List(int) (*[]Template, error)
 }
 
 // TemplateServiceOp handles communication with the image related methods of the
@@ -32,22 +30,16 @@ type TemplateServiceOp struct {
 }
 
 // List all images
-func (s *TemplateServiceOp) List(accountID int) (*TemplateList, error) {
+func (s *TemplateServiceOp) List(accountID int) (*[]Template, error) {
 	templateMap := make(map[string]interface{})
 	templateMap["accountId"] = 4
-	templateJSON, err := json.Marshal(templateMap)
+
+	body, err := s.client.Post("/cloudapi/images/list", templateMap, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/images/list", bytes.NewBuffer(templateJSON))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	templates := new(TemplateList)
+
+	templates := new([]Template)
 	err = json.Unmarshal(body, &templates)
 	if err != nil {
 		return nil, err

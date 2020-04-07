@@ -1,9 +1,7 @@
 package ovc
 
 import (
-	"bytes"
 	"encoding/json"
-	"net/http"
 )
 
 // IpsecConfig is used when creating/deleting/listing ipsec
@@ -14,9 +12,9 @@ type IpsecConfig struct {
 	PskSecret            string `json:"pskSecret,omitempty"`
 }
 
-// IpsecList is a list of ipsec of a cloudspace
+// IpsecInfo is a list of ipsec of a cloudspace
 // Returned when using the List method
-type IpsecList []struct {
+type IpsecInfo struct {
 	RemoteAddr           string `json:"remoteAddr"`
 	RemotePrivateNetwork string `json:"remoteprivatenetwork"`
 	PSK                  string `json:"psk"`
@@ -26,7 +24,7 @@ type IpsecList []struct {
 // endpoints of the OVC API
 type IpsecService interface {
 	Create(*IpsecConfig) (string, error)
-	List(*IpsecConfig) (*IpsecList, error)
+	List(*IpsecConfig) (*[]IpsecInfo, error)
 	Delete(*IpsecConfig) error
 }
 
@@ -38,15 +36,7 @@ type IpsecServiceOp struct {
 
 // Create a new ipsec tunnel
 func (s *IpsecServiceOp) Create(ipsecConfig *IpsecConfig) (string, error) {
-	ipsecJSON, err := json.Marshal(*ipsecConfig)
-	if err != nil {
-		return "", err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/ipsec/addTunnelToCloudspace", bytes.NewBuffer(ipsecJSON))
-	if err != nil {
-		return "", err
-	}
-	body, err := s.client.Do(req)
+	body, err := s.client.Post("/cloudapi/ipsec/addTunnelToCloudspace", *ipsecConfig, OperationalActionTimeout)
 	if err != nil {
 		return "", err
 	}
@@ -62,34 +52,17 @@ func (s *IpsecServiceOp) Create(ipsecConfig *IpsecConfig) (string, error) {
 
 // Delete an existing ipsec tunnel
 func (s *IpsecServiceOp) Delete(ipsecConfig *IpsecConfig) error {
-	ipsecJSON, err := json.Marshal(*ipsecConfig)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/ipsec/removeTunnelFromCloudspace", bytes.NewBuffer(ipsecJSON))
-	if err != nil {
-		return err
-	}
-	_, err = s.client.Do(req)
-
+	_, err := s.client.Post("/cloudapi/ipsec/removeTunnelFromCloudspace", *ipsecConfig, OperationalActionTimeout)
 	return err
 }
 
 // List all ipsec of a cloudspace
-func (s *IpsecServiceOp) List(ipsecConfig *IpsecConfig) (*IpsecList, error) {
-	ipsecJSON, err := json.Marshal(*ipsecConfig)
+func (s *IpsecServiceOp) List(ipsecConfig *IpsecConfig) (*[]IpsecInfo, error) {
+	body, err := s.client.Post("/cloudapi/ipsec/listTunnels", *ipsecConfig, ModelActionTimeout)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", s.client.ServerURL+"/cloudapi/ipsec/listTunnels", bytes.NewBuffer(ipsecJSON))
-	if err != nil {
-		return nil, err
-	}
-	body, err := s.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	ipsecList := new(IpsecList)
+	ipsecList := new([]IpsecInfo)
 	err = json.Unmarshal(body, &ipsecList)
 	if err != nil {
 		return nil, err
