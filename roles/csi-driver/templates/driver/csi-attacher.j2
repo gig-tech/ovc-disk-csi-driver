@@ -40,6 +40,7 @@ spec:
             - "--url=$(OVC_URL)"
             - "--account=$(OVC_ACCOUNT)"
             - "--verbose"
+            - "--attacher"
           env:
             - name: CSI_ENDPOINT
               value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
